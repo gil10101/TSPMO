@@ -1,0 +1,86 @@
+# Core Python & Frameworks
+fastapi
+uvicorn[standard]
+streamlit
+click
+pydantic
+pydantic-settings
+
+# Machine Learning & Data Science
+torch
+scikit-learn
+lightgbm
+pandas
+numpy
+scipy
+shap
+
+# Time Series & Chronos (Core requirement)
+git+https://github.com/amazon-science/chronos-forecasting.git
+transformers
+huggingface-hub
+tokenizers
+
+# Data Sources & APIs
+yfinance
+requests
+aiohttp
+websockets
+alpha-vantage
+
+# Databases & Caching
+sqlalchemy
+psycopg2-binary
+redis
+
+# Async Programming
+asyncpg
+aiofiles
+
+# Testing Framework
+pytest
+pytest-asyncio
+pytest-cov
+httpx
+
+# Configuration & Environment
+python-dotenv
+pyyaml
+
+# Job Scheduling & Background Tasks
+apscheduler
+
+# Visualization & Charts
+plotly
+
+# Technical Analysis
+finta
+
+# Time & Date Utilities
+python-dateutil
+pytz
+
+# Memory & Performance
+psutil
+
+# Retry Mechanisms
+tenacity
+
+# Model Serialization
+joblib
+
+# WebSocket Support
+python-multipart
+
+# Additional Dependencies for Production
+alembic
+typing-extensions
+
+# Additional financial data sources
+fredapi
+
+# Timezone handling
+tzdata
+
+# Additional async utilities
+anyio
