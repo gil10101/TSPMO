@@ -1,0 +1,4 @@
+[console_scripts]
+tspmo = src.cli.main:cli
+tspmo-api = src.api.main:start_server
+tspmo-dashboard = src.dashboard.main:start_dashboard

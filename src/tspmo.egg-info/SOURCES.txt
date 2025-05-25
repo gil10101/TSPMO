@@ -1,0 +1,8 @@
+README.md
+pyproject.toml
+src/tspmo.egg-info/PKG-INFO
+src/tspmo.egg-info/SOURCES.txt
+src/tspmo.egg-info/dependency_links.txt
+src/tspmo.egg-info/entry_points.txt
+src/tspmo.egg-info/requires.txt
+src/tspmo.egg-info/top_level.txt

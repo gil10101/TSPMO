@@ -2,3 +2,11 @@
 .venv
 tpt.md
 /docs/*
+.vscode/*
+.flake8
+.pre-commit-config.yaml
+.github/*
+.mypy_cache/*
+.pytest_cache/*
+.venv/*
+.coverage

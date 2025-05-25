@@ -1,0 +1,8 @@
+api
+application
+cli
+core
+dashboard
+domain
+infrastructure
+utils
