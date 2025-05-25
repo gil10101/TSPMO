@@ -1,0 +1,608 @@
+# Smart Stock Forecasting System - Risk Management Configuration
+# Version: 1.0.0
+# Last Updated: 2024-12-19
+# Description: Risk limits and portfolio management rules for TSPMO
+
+# =============================================================================
+# GLOBAL RISK SETTINGS
+# =============================================================================
+global:
+  # Risk framework
+  framework:
+    risk_model: "var_based"  # Options: var_based, volatility_based, drawdown_based
+    confidence_level: 0.95   # 95% confidence level for VaR calculations
+    time_horizon_days: 1     # Daily risk calculations
+    
+  # Risk tolerance
+  risk_tolerance:
+    profile: "moderate"      # Options: conservative, moderate, aggressive
+    max_portfolio_volatility: 0.15  # 15% annual volatility limit
+    max_daily_var: 0.02      # 2% daily Value at Risk limit
+    max_drawdown: 0.10       # 10% maximum drawdown limit
+    
+  # Risk monitoring
+  monitoring:
+    real_time_monitoring: true
+    alert_thresholds:
+      warning_level: 0.8     # 80% of limit triggers warning
+      critical_level: 0.95   # 95% of limit triggers critical alert
+    
+    # Risk reporting
+    reporting:
+      daily_risk_report: true
+      weekly_risk_summary: true
+      monthly_risk_review: true
+      
+  # Emergency procedures
+  emergency:
+    auto_liquidation: false  # Automatic position liquidation
+    emergency_stop_loss: 0.05  # 5% emergency stop loss
+    circuit_breaker: true    # Enable circuit breaker functionality
+
+# =============================================================================
+# PORTFOLIO RISK LIMITS
+# =============================================================================
+portfolio:
+  # Portfolio-level constraints
+  constraints:
+    # Capital allocation
+    max_capital_allocation: 0.95  # Maximum 95% of capital invested
+    min_cash_reserve: 0.05        # Minimum 5% cash reserve
+    
+    # Concentration limits
+    max_single_position: 0.10     # Maximum 10% in single position
+    max_sector_allocation: 0.25   # Maximum 25% in single sector
+    max_correlation_exposure: 0.30 # Maximum 30% in highly correlated assets
+    
+    # Leverage constraints
+    max_leverage: 1.0             # No leverage allowed (1:1 ratio)
+    margin_requirement: 0.25      # 25% margin requirement if leverage enabled
+    
+  # Diversification requirements
+  diversification:
+    min_positions: 5              # Minimum 5 positions in portfolio
+    max_positions: 50             # Maximum 50 positions in portfolio
+    
+    # Sector diversification
+    sector_limits:
+      technology: 0.30            # Max 30% in technology
+      healthcare: 0.25            # Max 25% in healthcare
+      financials: 0.25            # Max 25% in financials
+      consumer_discretionary: 0.20 # Max 20% in consumer discretionary
+      consumer_staples: 0.15      # Max 15% in consumer staples
+      industrials: 0.20           # Max 20% in industrials
+      energy: 0.15               # Max 15% in energy
+      utilities: 0.10             # Max 10% in utilities
+      real_estate: 0.10           # Max 10% in real estate
+      materials: 0.15             # Max 15% in materials
+      communication_services: 0.15 # Max 15% in communication services
+      
+    # Market cap diversification
+    market_cap_limits:
+      large_cap: 0.70             # Max 70% in large cap (>$10B)
+      mid_cap: 0.40               # Max 40% in mid cap ($2B-$10B)
+      small_cap: 0.20             # Max 20% in small cap (<$2B)
+      
+  # Risk metrics monitoring
+  risk_metrics:
+    # Value at Risk (VaR)
+    var_limits:
+      daily_var_95: 0.02          # 2% daily VaR at 95% confidence
+      weekly_var_95: 0.05         # 5% weekly VaR at 95% confidence
+      monthly_var_95: 0.10        # 10% monthly VaR at 95% confidence
+      
+    # Expected Shortfall (Conditional VaR)
+    expected_shortfall:
+      daily_es_95: 0.03           # 3% daily Expected Shortfall
+      weekly_es_95: 0.07          # 7% weekly Expected Shortfall
+      
+    # Volatility limits
+    volatility_limits:
+      portfolio_volatility: 0.15  # 15% annual portfolio volatility
+      rolling_volatility_30d: 0.20 # 20% 30-day rolling volatility
+      
+    # Correlation limits
+    correlation_limits:
+      max_avg_correlation: 0.60   # Maximum average correlation
+      max_pairwise_correlation: 0.80 # Maximum pairwise correlation
+
+# =============================================================================
+# POSITION-LEVEL RISK LIMITS
+# =============================================================================
+position:
+  # Position sizing
+  sizing:
+    # Base position sizing method
+    method: "volatility_adjusted"  # Options: equal_weight, volatility_adjusted, risk_parity
+    
+    # Position size limits
+    min_position_size: 0.01       # Minimum 1% position size
+    max_position_size: 0.10       # Maximum 10% position size
+    
+    # Volatility-based sizing
+    volatility_target: 0.15       # Target 15% volatility per position
+    lookback_period: 60           # 60-day lookback for volatility calculation
+    
+    # Kelly criterion (if enabled)
+    kelly_criterion:
+      enabled: false              # Disabled by default
+      max_kelly_fraction: 0.25    # Maximum 25% of Kelly recommendation
+      
+  # Stop-loss rules
+  stop_loss:
+    # Stop-loss types
+    types:
+      fixed_percentage: true      # Fixed percentage stop-loss
+      trailing_stop: true         # Trailing stop-loss
+      volatility_based: true      # Volatility-based stop-loss
+      
+    # Fixed percentage stop-loss
+    fixed_stop_loss: 0.08         # 8% fixed stop-loss
+    
+    # Trailing stop-loss
+    trailing_stop:
+      initial_distance: 0.08      # Initial 8% trailing distance
+      step_size: 0.01             # 1% step size for trailing
+      max_distance: 0.15          # Maximum 15% trailing distance
+      
+    # Volatility-based stop-loss
+    volatility_stop:
+      multiplier: 2.0             # 2x daily volatility
+      min_stop_distance: 0.05     # Minimum 5% stop distance
+      max_stop_distance: 0.15     # Maximum 15% stop distance
+      
+  # Take-profit rules
+  take_profit:
+    enabled: true
+    
+    # Take-profit levels
+    levels:
+      partial_profit_1: 0.15      # Take 25% profit at 15% gain
+      partial_profit_2: 0.25      # Take 50% profit at 25% gain
+      full_profit: 0.40           # Take full profit at 40% gain
+      
+    # Profit-taking percentages
+    profit_taking:
+      level_1_percentage: 0.25    # 25% of position
+      level_2_percentage: 0.50    # 50% of position
+      level_3_percentage: 1.00    # 100% of position
+      
+  # Position monitoring
+  monitoring:
+    # Daily position checks
+    daily_checks:
+      price_movement: true        # Monitor daily price movements
+      volume_analysis: true       # Monitor volume patterns
+      technical_signals: true     # Monitor technical indicators
+      
+    # Risk alerts
+    alerts:
+      approaching_stop_loss: 0.90 # Alert when 90% of stop-loss reached
+      high_volatility: 2.0        # Alert when volatility > 2x normal
+      unusual_volume: 3.0         # Alert when volume > 3x average
+
+# =============================================================================
+# MARKET RISK CONTROLS
+# =============================================================================
+market_risk:
+  # Market conditions monitoring
+  conditions:
+    # Volatility regime detection
+    volatility_regimes:
+      low_volatility: 0.10        # VIX < 10 (low volatility)
+      normal_volatility: 0.20     # VIX 10-20 (normal volatility)
+      high_volatility: 0.30       # VIX 20-30 (high volatility)
+      extreme_volatility: 0.30    # VIX > 30 (extreme volatility)
+      
+    # Market stress indicators
+    stress_indicators:
+      vix_threshold: 25           # VIX > 25 indicates stress
+      credit_spread_threshold: 200 # Credit spreads > 200bps
+      correlation_spike: 0.8      # Average correlation > 80%
+      
+    # Market regime detection
+    regime_detection:
+      enabled: true
+      lookback_period: 60         # 60-day lookback
+      regime_indicators:
+        - "volatility"
+        - "correlation"
+        - "momentum"
+        - "mean_reversion"
+        
+  # Market-based position adjustments
+  position_adjustments:
+    # Volatility-based adjustments
+    volatility_adjustments:
+      enabled: true
+      high_vol_reduction: 0.5     # Reduce positions by 50% in high volatility
+      low_vol_increase: 1.2       # Increase positions by 20% in low volatility
+      
+    # Correlation-based adjustments
+    correlation_adjustments:
+      enabled: true
+      high_corr_reduction: 0.7    # Reduce positions by 30% when correlation is high
+      
+  # Circuit breakers
+  circuit_breakers:
+    # Portfolio-level circuit breakers
+    portfolio_breakers:
+      daily_loss_limit: 0.05      # 5% daily portfolio loss limit
+      weekly_loss_limit: 0.10     # 10% weekly portfolio loss limit
+      monthly_loss_limit: 0.15    # 15% monthly portfolio loss limit
+      
+    # Position-level circuit breakers
+    position_breakers:
+      single_position_loss: 0.15  # 15% single position loss limit
+      sector_loss_limit: 0.20     # 20% sector loss limit
+      
+    # Market-level circuit breakers
+    market_breakers:
+      market_crash_threshold: 0.10 # 10% market drop triggers defensive mode
+      flash_crash_threshold: 0.05  # 5% rapid drop triggers halt
+
+# =============================================================================
+# MODEL RISK MANAGEMENT
+# =============================================================================
+model_risk:
+  # Model performance monitoring
+  performance_monitoring:
+    # Performance thresholds
+    thresholds:
+      min_directional_accuracy: 0.52  # Minimum 52% directional accuracy
+      max_prediction_error: 0.15      # Maximum 15% prediction error
+      min_sharpe_ratio: 0.5           # Minimum Sharpe ratio of 0.5
+      max_drawdown_threshold: 0.20    # Maximum 20% model drawdown
+      
+    # Performance evaluation periods
+    evaluation_periods:
+      daily_evaluation: true
+      weekly_evaluation: true
+      monthly_evaluation: true
+      
+    # Model comparison
+    model_comparison:
+      benchmark_models: ["buy_and_hold", "random_walk", "moving_average"]
+      statistical_significance: 0.05   # 5% significance level
+      
+  # Model drift detection
+  drift_detection:
+    # Data drift
+    data_drift:
+      enabled: true
+      detection_method: "ks_test"     # Kolmogorov-Smirnov test
+      significance_level: 0.05        # 5% significance level
+      monitoring_window: 30           # 30-day monitoring window
+      
+    # Concept drift
+    concept_drift:
+      enabled: true
+      detection_method: "performance_degradation"
+      degradation_threshold: 0.10     # 10% performance degradation
+      monitoring_window: 60           # 60-day monitoring window
+      
+    # Prediction drift
+    prediction_drift:
+      enabled: true
+      drift_threshold: 0.15           # 15% change in prediction distribution
+      monitoring_window: 30           # 30-day monitoring window
+      
+  # Model ensemble risk
+  ensemble_risk:
+    # Model correlation monitoring
+    model_correlation:
+      max_correlation: 0.8            # Maximum correlation between models
+      correlation_window: 90          # 90-day correlation window
+      
+    # Model weight constraints
+    weight_constraints:
+      min_model_weight: 0.1           # Minimum 10% weight per model
+      max_model_weight: 0.6           # Maximum 60% weight per model
+      weight_stability: 0.05          # Maximum 5% weight change per period
+      
+    # Ensemble diversity
+    diversity_requirements:
+      min_diversity_score: 0.3        # Minimum diversity score
+      diversity_metrics: ["correlation", "prediction_variance", "feature_importance"]
+      
+  # Model validation and testing
+  validation:
+    # Out-of-sample testing
+    out_of_sample:
+      test_period_months: 6           # 6-month out-of-sample test
+      rolling_validation: true        # Rolling window validation
+      validation_frequency: "monthly" # Monthly validation
+      
+    # Stress testing
+    stress_testing:
+      enabled: true
+      stress_scenarios:
+        - "market_crash"              # 2008-style market crash
+        - "flash_crash"               # 2010-style flash crash
+        - "high_volatility"           # Extended high volatility period
+        - "low_volatility"            # Extended low volatility period
+        - "sector_rotation"           # Rapid sector rotation
+        
+    # Backtesting validation
+    backtesting:
+      min_backtest_period: 252        # Minimum 1 year backtest
+      walk_forward_validation: true   # Walk-forward analysis
+      monte_carlo_simulations: 1000   # 1000 Monte Carlo runs
+      
+  # Model governance
+  governance:
+    # Model approval process
+    approval_process:
+      required_approvals: 2           # Require 2 approvals for new models
+      approval_criteria:
+        - "performance_validation"
+        - "risk_assessment"
+        - "documentation_review"
+        - "code_review"
+        
+    # Model documentation
+    documentation:
+      required_documents:
+        - "model_specification"
+        - "validation_report"
+        - "risk_assessment"
+        - "implementation_guide"
+        - "monitoring_plan"
+        
+    # Model lifecycle management
+    lifecycle:
+      model_review_frequency: "quarterly" # Quarterly model review
+      model_retirement_criteria:
+        - "performance_degradation"
+        - "data_availability_issues"
+        - "regulatory_changes"
+        - "business_requirements_change"
+
+# =============================================================================
+# OPERATIONAL RISK CONTROLS
+# =============================================================================
+operational_risk:
+  # System risk controls
+  system_controls:
+    # Data quality controls
+    data_quality:
+      data_validation: true
+      data_completeness_threshold: 0.95  # 95% data completeness required
+      data_freshness_threshold: 24       # Data must be < 24 hours old
+      
+    # System availability
+    availability:
+      uptime_requirement: 0.99           # 99% uptime requirement
+      max_downtime_minutes: 60           # Maximum 60 minutes downtime
+      backup_systems: true               # Backup systems required
+      
+    # Performance monitoring
+    performance:
+      max_latency_ms: 1000              # Maximum 1 second latency
+      max_memory_usage_gb: 8            # Maximum 8GB memory usage
+      max_cpu_usage_percent: 80         # Maximum 80% CPU usage
+      
+  # Trading controls
+  trading_controls:
+    # Order validation
+    order_validation:
+      price_validation: true            # Validate order prices
+      size_validation: true             # Validate order sizes
+      symbol_validation: true           # Validate trading symbols
+      
+    # Trading limits
+    trading_limits:
+      max_orders_per_minute: 100        # Maximum 100 orders per minute
+      max_order_size: 10000             # Maximum $10,000 per order
+      max_daily_trades: 1000            # Maximum 1000 trades per day
+      
+    # Fat finger protection
+    fat_finger_protection:
+      enabled: true
+      price_deviation_threshold: 0.10   # 10% price deviation threshold
+      size_multiple_threshold: 10       # 10x normal size threshold
+      
+  # Compliance controls
+  compliance:
+    # Regulatory compliance
+    regulatory:
+      position_reporting: true          # Position reporting required
+      trade_reporting: true             # Trade reporting required
+      risk_reporting: true              # Risk reporting required
+      
+    # Audit controls
+    audit:
+      audit_trail: true                 # Maintain complete audit trail
+      data_retention_years: 7           # Retain data for 7 years
+      access_logging: true              # Log all system access
+      
+    # Risk limits enforcement
+    limits_enforcement:
+      real_time_monitoring: true        # Real-time limits monitoring
+      automatic_enforcement: true       # Automatic limits enforcement
+      override_approval_required: true  # Require approval for overrides
+
+# =============================================================================
+# LIQUIDITY RISK MANAGEMENT
+# =============================================================================
+liquidity_risk:
+  # Liquidity assessment
+  assessment:
+    # Liquidity metrics
+    metrics:
+      average_daily_volume: true        # Monitor average daily volume
+      bid_ask_spread: true              # Monitor bid-ask spreads
+      market_impact: true               # Estimate market impact
+      
+    # Liquidity thresholds
+    thresholds:
+      min_daily_volume: 1000000         # Minimum $1M daily volume
+      max_bid_ask_spread: 0.01          # Maximum 1% bid-ask spread
+      max_market_impact: 0.005          # Maximum 0.5% market impact
+      
+  # Liquidity constraints
+  constraints:
+    # Position sizing based on liquidity
+    liquidity_based_sizing:
+      enabled: true
+      max_position_vs_volume: 0.05      # Maximum 5% of daily volume
+      liquidity_adjustment_factor: 0.5  # Reduce position size by 50% for illiquid assets
+      
+    # Concentration limits
+    concentration_limits:
+      max_illiquid_allocation: 0.20     # Maximum 20% in illiquid assets
+      min_liquid_reserve: 0.30          # Minimum 30% in highly liquid assets
+      
+  # Liquidity monitoring
+  monitoring:
+    # Real-time monitoring
+    real_time:
+      volume_monitoring: true           # Monitor trading volume
+      spread_monitoring: true           # Monitor bid-ask spreads
+      depth_monitoring: true            # Monitor market depth
+      
+    # Liquidity alerts
+    alerts:
+      low_volume_alert: 0.5             # Alert when volume < 50% of average
+      wide_spread_alert: 2.0            # Alert when spread > 2x normal
+      thin_depth_alert: 0.3             # Alert when depth < 30% of normal
+
+# =============================================================================
+# STRESS TESTING AND SCENARIO ANALYSIS
+# =============================================================================
+stress_testing:
+  # Stress test scenarios
+  scenarios:
+    # Historical scenarios
+    historical:
+      - name: "2008_financial_crisis"
+        description: "2008 Financial Crisis scenario"
+        market_shock: -0.40             # 40% market decline
+        volatility_spike: 3.0           # 3x normal volatility
+        correlation_increase: 0.9       # 90% correlation
+        
+      - name: "2020_covid_crash"
+        description: "2020 COVID-19 market crash"
+        market_shock: -0.35             # 35% market decline
+        volatility_spike: 4.0           # 4x normal volatility
+        recovery_period: 60             # 60-day recovery
+        
+      - name: "2010_flash_crash"
+        description: "2010 Flash Crash scenario"
+        market_shock: -0.10             # 10% rapid decline
+        duration_minutes: 30            # 30-minute event
+        liquidity_evaporation: 0.8      # 80% liquidity reduction
+        
+    # Hypothetical scenarios
+    hypothetical:
+      - name: "interest_rate_shock"
+        description: "Rapid interest rate increase"
+        rate_increase: 0.03             # 3% rate increase
+        bond_impact: -0.15              # 15% bond decline
+        growth_impact: -0.20            # 20% growth stock decline
+        
+      - name: "geopolitical_crisis"
+        description: "Major geopolitical event"
+        market_shock: -0.25             # 25% market decline
+        safe_haven_rally: 0.10          # 10% safe haven rally
+        commodity_spike: 0.30           # 30% commodity increase
+        
+  # Stress test execution
+  execution:
+    # Test frequency
+    frequency:
+      daily_stress_test: false         # Daily stress testing
+      weekly_stress_test: true         # Weekly stress testing
+      monthly_comprehensive: true      # Monthly comprehensive testing
+      
+    # Test parameters
+    parameters:
+      confidence_levels: [0.95, 0.99]  # 95% and 99% confidence levels
+      time_horizons: [1, 5, 21]        # 1-day, 1-week, 1-month horizons
+      monte_carlo_simulations: 10000   # 10,000 Monte Carlo simulations
+      
+  # Results analysis
+  analysis:
+    # Risk metrics calculation
+    risk_metrics:
+      - "portfolio_var"               # Portfolio Value at Risk
+      - "component_var"               # Component Value at Risk
+      - "marginal_var"                # Marginal Value at Risk
+      - "expected_shortfall"          # Expected Shortfall
+      - "maximum_drawdown"            # Maximum Drawdown
+      
+    # Reporting
+    reporting:
+      generate_reports: true          # Generate stress test reports
+      report_distribution: ["risk_team", "management", "compliance"]
+      escalation_thresholds:
+        warning: 0.15                 # 15% portfolio loss warning
+        critical: 0.25                # 25% portfolio loss critical
+
+# =============================================================================
+# RISK REPORTING AND GOVERNANCE
+# =============================================================================
+reporting:
+  # Risk reports
+  reports:
+    # Daily risk report
+    daily:
+      enabled: true
+      generation_time: "18:00"        # Generate at 6 PM
+      recipients: ["risk_team", "portfolio_managers"]
+      content:
+        - "portfolio_summary"
+        - "risk_metrics"
+        - "limit_utilization"
+        - "alerts_summary"
+        
+    # Weekly risk report
+    weekly:
+      enabled: true
+      generation_day: "monday"        # Generate on Monday
+      generation_time: "09:00"        # Generate at 9 AM
+      recipients: ["risk_team", "management", "compliance"]
+      content:
+        - "comprehensive_risk_analysis"
+        - "stress_test_results"
+        - "model_performance"
+        - "limit_breaches"
+        
+    # Monthly risk report
+    monthly:
+      enabled: true
+      generation_day: 1               # Generate on 1st of month
+      generation_time: "09:00"        # Generate at 9 AM
+      recipients: ["executive_team", "board", "regulators"]
+      content:
+        - "executive_summary"
+        - "risk_trend_analysis"
+        - "model_validation_results"
+        - "regulatory_compliance"
+        
+  # Risk governance
+  governance:
+    # Risk committee
+    risk_committee:
+      meeting_frequency: "monthly"    # Monthly risk committee meetings
+      required_attendees:
+        - "chief_risk_officer"
+        - "portfolio_manager"
+        - "compliance_officer"
+        - "technology_lead"
+        
+    # Risk policies
+    policies:
+      policy_review_frequency: "annual" # Annual policy review
+      policy_approval_authority: "risk_committee"
+      policy_distribution: "all_staff"
+      
+    # Risk training
+    training:
+      mandatory_training: true        # Mandatory risk training
+      training_frequency: "annual"    # Annual training requirement
+      training_topics:
+        - "risk_management_framework"
+        - "trading_limits"
+        - "model_risk"
+        - "operational_risk" 

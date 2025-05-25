@@ -1,0 +1,513 @@
+# Smart Stock Forecasting System - Main Configuration
+# Version: 1.0.0
+# Last Updated: 2024-12-19
+# Description: Comprehensive configuration for TSPMO (Technical Stock Prediction and Management Operations)
+
+# =============================================================================
+# ENVIRONMENT CONFIGURATION
+# =============================================================================
+environment:
+  name: "development"  # Options: development, staging, production
+  debug: true
+  log_level: "INFO"    # Options: DEBUG, INFO, WARNING, ERROR, CRITICAL
+  timezone: "UTC"
+  locale: "en_US.UTF-8"
+
+# =============================================================================
+# APPLICATION SETTINGS
+# =============================================================================
+application:
+  name: "Smart Stock Forecasting System"
+  version: "1.0.0"
+  description: "AI-powered stock prediction and portfolio management system"
+  
+  # API Configuration
+  api:
+    host: "0.0.0.0"
+    port: 8000
+    workers: 4
+    reload: true  # Only for development
+    access_log: true
+    cors_origins:
+      - "http://localhost:3000"
+      - "http://localhost:8501"  # Streamlit default port
+      - "http://127.0.0.1:8501"
+    cors_methods:
+      - "GET"
+      - "POST"
+      - "PUT"
+      - "DELETE"
+      - "OPTIONS"
+    cors_headers:
+      - "Content-Type"
+      - "Authorization"
+      - "X-API-Key"
+    
+    # Rate Limiting
+    rate_limit:
+      enabled: true
+      requests_per_minute: 100
+      burst_size: 20
+    
+    # Authentication
+    auth:
+      enabled: true
+      api_key_header: "X-API-Key"
+      jwt_secret_key: "${JWT_SECRET_KEY}"
+      jwt_algorithm: "HS256"
+      jwt_expiration_hours: 24
+  
+  # WebSocket Configuration
+  websocket:
+    enabled: true
+    host: "0.0.0.0"
+    port: 8001
+    max_connections: 100
+    heartbeat_interval: 30
+    connection_timeout: 60
+    
+    # Real-time data streams
+    streams:
+      market_data: true
+      predictions: true
+      portfolio_updates: true
+      risk_alerts: true
+    
+    # Message queuing
+    message_queue:
+      max_queue_size: 1000
+      batch_size: 10
+      flush_interval: 1  # seconds
+  
+  # Dashboard Configuration
+  dashboard:
+    host: "0.0.0.0"
+    port: 8501
+    title: "Smart Stock Forecasting Dashboard"
+    layout: "wide"
+    initial_sidebar_state: "expanded"
+    theme:
+      primary_color: "#1f77b4"
+      background_color: "#ffffff"
+      secondary_background_color: "#f0f2f6"
+      text_color: "#262730"
+    
+    # Real-time Updates
+    auto_refresh:
+      enabled: true
+      interval_seconds: 30
+      max_age_minutes: 5
+  
+  # CLI Configuration
+  cli:
+    default_output_format: "table"  # Options: table, json, csv
+    verbose: false
+    color_output: true
+    progress_bars: true
+
+# =============================================================================
+# DATABASE CONFIGURATION
+# =============================================================================
+database:
+  # Primary Database (PostgreSQL for production, SQLite for development)
+  primary:
+    type: "sqlite"  # Options: sqlite, postgresql
+    sqlite:
+      path: "data/tspmo.db"
+      timeout: 30
+      check_same_thread: false
+    postgresql:
+      host: "${POSTGRES_HOST:localhost}"
+      port: "${POSTGRES_PORT:5432}"
+      database: "${POSTGRES_DB:tspmo}"
+      username: "${POSTGRES_USER:tspmo_user}"
+      password: "${POSTGRES_PASSWORD}"
+      pool_size: 10
+      max_overflow: 20
+      pool_timeout: 30
+      pool_recycle: 3600
+      echo: false  # Set to true for SQL debugging
+  
+  # Connection Settings
+  connection:
+    retry_attempts: 3
+    retry_delay_seconds: 1
+    connection_timeout: 30
+    query_timeout: 60
+  
+  # Migration Settings
+  migrations:
+    auto_upgrade: false  # Set to true for automatic migrations
+    backup_before_upgrade: true
+    location: "alembic"
+
+# =============================================================================
+# CACHE CONFIGURATION
+# =============================================================================
+cache:
+  # Redis Configuration
+  redis:
+    enabled: true
+    host: "${REDIS_HOST:localhost}"
+    port: "${REDIS_PORT:6379}"
+    database: 0
+    password: "${REDIS_PASSWORD:}"
+    ssl: false
+    socket_timeout: 5
+    socket_connect_timeout: 5
+    retry_on_timeout: true
+    max_connections: 50
+  
+  # Cache Settings
+  settings:
+    default_ttl_seconds: 3600  # 1 hour
+    market_data_ttl_seconds: 300  # 5 minutes
+    prediction_ttl_seconds: 1800  # 30 minutes
+    model_cache_ttl_seconds: 86400  # 24 hours
+    
+    # Cache Keys Prefix
+    key_prefix: "tspmo"
+    
+    # Serialization
+    serializer: "json"  # Options: json, pickle
+
+# =============================================================================
+# MACHINE LEARNING CONFIGURATION
+# =============================================================================
+ml:
+  # Model Registry
+  model_registry:
+    path: "data/models"
+    versioning: true
+    auto_backup: true
+    
+  # Training Configuration
+  training:
+    # Scheduler settings for APScheduler
+    scheduler:
+      enabled: true
+      timezone: "UTC"
+      job_defaults:
+        coalesce: false
+        max_instances: 1
+        misfire_grace_time: 300
+    
+    # Training schedules
+    schedules:
+      daily_retrain: "0 2 * * *"      # Daily at 2 AM
+      weekly_full_train: "0 3 * * 0"  # Weekly on Sunday at 3 AM
+      monthly_evaluation: "0 4 1 * *" # Monthly on 1st at 4 AM
+    
+    # Resource management
+    resources:
+      max_cpu_cores: 4
+      max_memory_gb: 8
+      gpu_enabled: false
+      device: "auto"  # auto, cpu, cuda
+  
+  # Model serving
+  serving:
+    batch_prediction: true
+    real_time_inference: true
+    model_warming: true
+    
+    # Performance settings
+    performance:
+      batch_size: 32
+      max_concurrent_requests: 10
+      timeout_seconds: 30
+
+# =============================================================================
+# LOGGING CONFIGURATION
+# =============================================================================
+logging:
+  version: 1
+  disable_existing_loggers: false
+  
+  formatters:
+    standard:
+      format: "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
+      datefmt: "%Y-%m-%d %H:%M:%S"
+    
+    detailed:
+      format: "%(asctime)s [%(levelname)s] %(name)s:%(lineno)d - %(funcName)s(): %(message)s"
+      datefmt: "%Y-%m-%d %H:%M:%S"
+    
+    json:
+      format: '{"timestamp": "%(asctime)s", "level": "%(levelname)s", "logger": "%(name)s", "message": "%(message)s", "module": "%(module)s", "function": "%(funcName)s", "line": %(lineno)d}'
+      datefmt: "%Y-%m-%dT%H:%M:%S"
+  
+  handlers:
+    console:
+      class: "logging.StreamHandler"
+      level: "INFO"
+      formatter: "standard"
+      stream: "ext://sys.stdout"
+    
+    file:
+      class: "logging.handlers.RotatingFileHandler"
+      level: "DEBUG"
+      formatter: "detailed"
+      filename: "logs/tspmo.log"
+      maxBytes: 10485760  # 10MB
+      backupCount: 5
+      encoding: "utf8"
+    
+    error_file:
+      class: "logging.handlers.RotatingFileHandler"
+      level: "ERROR"
+      formatter: "json"
+      filename: "logs/tspmo_errors.log"
+      maxBytes: 10485760  # 10MB
+      backupCount: 10
+      encoding: "utf8"
+  
+  loggers:
+    "":  # Root logger
+      level: "INFO"
+      handlers: ["console", "file"]
+      propagate: false
+    
+    "tspmo":
+      level: "DEBUG"
+      handlers: ["console", "file", "error_file"]
+      propagate: false
+    
+    "uvicorn":
+      level: "INFO"
+      handlers: ["console", "file"]
+      propagate: false
+    
+    "sqlalchemy.engine":
+      level: "WARNING"
+      handlers: ["file"]
+      propagate: false
+
+# =============================================================================
+# SECURITY CONFIGURATION
+# =============================================================================
+security:
+  # API Security
+  api_keys:
+    enabled: true
+    header_name: "X-API-Key"
+    valid_keys:
+      - "${API_KEY_ADMIN}"
+      - "${API_KEY_USER}"
+  
+  # HTTPS Settings
+  https:
+    enabled: false  # Set to true in production
+    cert_file: "certs/cert.pem"
+    key_file: "certs/key.pem"
+  
+  # Data Encryption
+  encryption:
+    enabled: true
+    algorithm: "AES-256-GCM"
+    key: "${ENCRYPTION_KEY}"
+  
+  # Input Validation
+  validation:
+    max_request_size_mb: 10
+    max_file_size_mb: 50
+    allowed_file_types:
+      - "csv"
+      - "json"
+      - "yaml"
+    
+    # SQL Injection Protection
+    sql_injection_protection: true
+    
+    # XSS Protection
+    xss_protection: true
+
+# =============================================================================
+# MONITORING AND OBSERVABILITY
+# =============================================================================
+monitoring:
+  # Metrics Collection
+  metrics:
+    enabled: true
+    endpoint: "/metrics"
+    include_in_schema: false
+    
+    # Prometheus Configuration
+    prometheus:
+      enabled: true
+      port: 9090
+      job_name: "tspmo"
+      scrape_interval: "15s"
+      metrics_path: "/metrics"
+  
+  # Health Checks
+  health:
+    enabled: true
+    endpoint: "/health"
+    include_dependencies: true
+    timeout_seconds: 30
+    
+    # Health Check Components
+    checks:
+      - "database"
+      - "cache"
+      - "external_apis"
+      - "ml_models"
+  
+  # Tracing
+  tracing:
+    enabled: false  # Enable for detailed performance analysis
+    service_name: "tspmo"
+    jaeger_endpoint: "http://localhost:14268/api/traces"
+  
+  # Performance Monitoring
+  performance:
+    slow_query_threshold_ms: 1000
+    memory_usage_threshold_mb: 1024
+    cpu_usage_threshold_percent: 80
+
+# =============================================================================
+# FEATURE FLAGS
+# =============================================================================
+features:
+  # ML Features
+  ml_features:
+    chronos_model: true
+    lstm_model: true
+    lightgbm_model: true
+    ensemble_predictions: true
+    model_explainability: true
+  
+  # Data Features
+  data_features:
+    real_time_streaming: true
+    historical_data_backfill: true
+    data_quality_checks: true
+    automatic_data_cleaning: true
+  
+  # API Features
+  api_features:
+    websocket_streaming: true
+    batch_predictions: true
+    model_training_api: true
+    portfolio_management: true
+  
+  # Dashboard Features
+  dashboard_features:
+    real_time_charts: true
+    interactive_backtesting: true
+    risk_monitoring: true
+    model_comparison: true
+  
+  # Experimental Features
+  experimental:
+    sentiment_analysis: false
+    news_integration: false
+    social_media_signals: false
+    alternative_data: false
+
+# =============================================================================
+# SYSTEM LIMITS AND QUOTAS
+# =============================================================================
+limits:
+  # API Limits
+  api:
+    max_concurrent_requests: 100
+    max_request_timeout_seconds: 300
+    max_response_size_mb: 100
+  
+  # Data Processing Limits
+  data:
+    max_symbols_per_request: 50
+    max_historical_days: 3650  # ~10 years
+    max_batch_size: 1000
+    max_concurrent_downloads: 10
+  
+  # ML Model Limits
+  ml:
+    max_training_time_hours: 24
+    max_model_size_mb: 500
+    max_prediction_horizon_days: 30
+    max_ensemble_models: 10
+  
+  # Memory and Storage
+  resources:
+    max_memory_usage_gb: 8
+    max_disk_usage_gb: 100
+    max_log_file_size_mb: 100
+    log_retention_days: 30
+
+# =============================================================================
+# BACKUP AND RECOVERY
+# =============================================================================
+backup:
+  # Database Backup
+  database:
+    enabled: true
+    schedule: "0 2 * * *"  # Daily at 2 AM
+    retention_days: 30
+    compression: true
+    location: "backups/database"
+  
+  # Model Backup
+  models:
+    enabled: true
+    schedule: "0 3 * * 0"  # Weekly on Sunday at 3 AM
+    retention_weeks: 12
+    location: "backups/models"
+  
+  # Configuration Backup
+  config:
+    enabled: true
+    schedule: "0 1 * * *"  # Daily at 1 AM
+    retention_days: 90
+    location: "backups/config"
+
+# =============================================================================
+# DEVELOPMENT AND TESTING
+# =============================================================================
+development:
+  # Debug Settings
+  debug:
+    enabled: true
+    profiling: false
+    memory_profiling: false
+    sql_echo: false
+  
+  # Testing Configuration
+  testing:
+    database_url: "sqlite:///data/test_tspmo.db"
+    cache_url: "redis://localhost:6379/1"
+    mock_external_apis: true
+    test_data_path: "tests/data"
+  
+  # Hot Reload
+  hot_reload:
+    enabled: true
+    watch_dirs:
+      - "src"
+      - "config"
+    ignore_patterns:
+      - "*.pyc"
+      - "__pycache__"
+      - "*.log"
+
+# =============================================================================
+# EXTERNAL INTEGRATIONS
+# =============================================================================
+integrations:
+  # Email Notifications
+  email:
+    enabled: false
+    smtp_server: "${SMTP_SERVER}"
+    smtp_port: 587
+    username: "${SMTP_USERNAME}"
+    password: "${SMTP_PASSWORD}"
+    use_tls: true
+    from_address: "noreply@tspmo.com"
+  
+# =============================================================================
+# ENVIRONMENT OVERRIDES
+# =============================================================================
+# Note: Environment-specific settings can override these defaults
+# Use environment variables with TSPMO_ prefix for sensitive data 

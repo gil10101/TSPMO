@@ -1,0 +1,621 @@
+# Smart Stock Forecasting System - Data Sources Configuration
+# Version: 1.0.0
+# Last Updated: 2024-12-19
+# Description: External data source configurations and API settings for TSPMO
+
+# =============================================================================
+# GLOBAL DATA SOURCE SETTINGS
+# =============================================================================
+global:
+  # Data collection settings
+  collection:
+    # Default parameters
+    default_symbols: ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "NVDA", "META", "NFLX", "SPY", "QQQ"]
+    default_period: "5y"  # 5 years of historical data
+    default_interval: "1d"  # Daily data
+    
+    # Retry configuration
+    retry:
+      max_attempts: 3
+      backoff_factor: 2
+      initial_delay: 1  # seconds
+      max_delay: 60     # seconds
+      
+    # Rate limiting
+    rate_limiting:
+      enabled: true
+      default_requests_per_minute: 60
+      burst_allowance: 10
+      
+    # Data validation
+    validation:
+      check_data_quality: true
+      min_data_points: 100
+      max_missing_percentage: 5.0
+      outlier_detection: true
+      outlier_threshold: 5.0  # Standard deviations
+      
+    # Caching
+    caching:
+      enabled: true
+      cache_duration_minutes: 15
+      cache_historical_data: true
+      historical_cache_duration_hours: 24
+  
+  # Failover configuration
+  failover:
+    enabled: true
+    max_source_failures: 2
+    failover_delay_seconds: 5
+    health_check_interval_minutes: 5
+    
+  # Data synchronization
+  synchronization:
+    timezone: "US/Eastern"  # Market timezone
+    market_hours_only: false
+    weekend_data: false
+    holiday_calendar: "NYSE"
+
+# =============================================================================
+# ALPHA VANTAGE CONFIGURATION (Primary Data Source)
+# =============================================================================
+alpha_vantage:
+  # Service identification
+  name: "Alpha Vantage"
+  priority: 1  # Primary source
+  enabled: true
+  
+  # API configuration
+  api:
+    base_url: "https://www.alphavantage.co/query"
+    api_key: "${ALPHA_VANTAGE_API_KEY}"
+    timeout_seconds: 30
+    
+    # Rate limiting (Free tier: 5 calls per minute, 500 calls per day)
+    rate_limits:
+      requests_per_minute: 5
+      requests_per_day: 500
+      burst_size: 2
+      
+    # Request parameters
+    default_params:
+      outputsize: "full"  # full or compact
+      datatype: "json"    # json or csv
+      
+  # Supported data types
+  data_types:
+    # Time series data
+    time_series:
+      daily: "TIME_SERIES_DAILY"
+      daily_adjusted: "TIME_SERIES_DAILY_ADJUSTED"
+      weekly: "TIME_SERIES_WEEKLY"
+      weekly_adjusted: "TIME_SERIES_WEEKLY_ADJUSTED"
+      monthly: "TIME_SERIES_MONTHLY"
+      monthly_adjusted: "TIME_SERIES_MONTHLY_ADJUSTED"
+      intraday: "TIME_SERIES_INTRADAY"
+      
+    # Technical indicators
+    technical_indicators:
+      sma: "SMA"
+      ema: "EMA"
+      rsi: "RSI"
+      macd: "MACD"
+      bollinger_bands: "BBANDS"
+      stochastic: "STOCH"
+      atr: "ATR"
+      adx: "ADX"
+      cci: "CCI"
+      aroon: "AROON"
+      
+    # Fundamental data
+    fundamental:
+      company_overview: "OVERVIEW"
+      income_statement: "INCOME_STATEMENT"
+      balance_sheet: "BALANCE_SHEET"
+      cash_flow: "CASH_FLOW"
+      earnings: "EARNINGS"
+      
+    # Economic indicators
+    economic:
+      real_gdp: "REAL_GDP"
+      real_gdp_per_capita: "REAL_GDP_PER_CAPITA"
+      treasury_yield: "TREASURY_YIELD"
+      federal_funds_rate: "FEDERAL_FUNDS_RATE"
+      cpi: "CPI"
+      inflation: "INFLATION"
+      retail_sales: "RETAIL_SALES"
+      durables: "DURABLES"
+      unemployment: "UNEMPLOYMENT"
+      nonfarm_payroll: "NONFARM_PAYROLL"
+      
+  # Error handling
+  error_handling:
+    retry_on_errors:
+      - "timeout"
+      - "rate_limit"
+      - "server_error"
+    ignore_errors:
+      - "invalid_symbol"
+      - "no_data"
+    
+    # Error codes mapping
+    error_codes:
+      rate_limit: "Thank you for using Alpha Vantage"
+      invalid_api_key: "Invalid API call"
+      invalid_symbol: "Invalid API call"
+      
+  # Data processing
+  processing:
+    # Column mapping for time series data
+    column_mapping:
+      "1. open": "open"
+      "2. high": "high"
+      "3. low": "low"
+      "4. close": "close"
+      "5. adjusted close": "adj_close"
+      "6. volume": "volume"
+      "7. dividend amount": "dividend"
+      "8. split coefficient": "split_coeff"
+      
+    # Data cleaning
+    cleaning:
+      remove_zero_volume: true
+      interpolate_missing: true
+      remove_outliers: true
+
+# =============================================================================
+# YAHOO FINANCE CONFIGURATION (Backup Data Source)
+# =============================================================================
+yahoo_finance:
+  # Service identification
+  name: "Yahoo Finance"
+  priority: 2  # Backup source
+  enabled: true
+  
+  # API configuration (using yfinance library)
+  api:
+    timeout_seconds: 30
+    max_workers: 4  # Parallel downloads
+    
+    # Rate limiting (Conservative approach)
+    rate_limits:
+      requests_per_minute: 60
+      requests_per_second: 2
+      burst_size: 5
+      
+  # Supported periods and intervals
+  periods:
+    valid_periods: ["1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"]
+    default_period: "5y"
+    
+  intervals:
+    valid_intervals: ["1m", "2m", "5m", "15m", "30m", "60m", "90m", "1h", "1d", "5d", "1wk", "1mo", "3mo"]
+    default_interval: "1d"
+    
+  # Data types
+  data_types:
+    # Historical data
+    historical:
+      - "open"
+      - "high"
+      - "low"
+      - "close"
+      - "adj_close"
+      - "volume"
+      
+    # Additional info
+    info_fields:
+      - "marketCap"
+      - "enterpriseValue"
+      - "trailingPE"
+      - "forwardPE"
+      - "pegRatio"
+      - "priceToBook"
+      - "priceToSales"
+      - "enterpriseToRevenue"
+      - "enterpriseToEbitda"
+      - "52WeekChange"
+      - "beta"
+      - "dividendYield"
+      - "payoutRatio"
+      - "fiveYearAvgDividendYield"
+      - "trailingAnnualDividendYield"
+      
+    # Financial statements
+    financials:
+      - "income_stmt"
+      - "balance_sheet"
+      - "cash_flow"
+      - "quarterly_income_stmt"
+      - "quarterly_balance_sheet"
+      - "quarterly_cash_flow"
+      
+  # Error handling
+  error_handling:
+    retry_on_errors:
+      - "timeout"
+      - "connection_error"
+      - "http_error"
+    max_retries: 3
+    backoff_factor: 1.5
+    
+  # Data processing
+  processing:
+    # Handle stock splits and dividends
+    auto_adjust: true
+    back_adjust: true
+    
+    # Data validation
+    validate_data: true
+    min_volume: 1000  # Minimum daily volume
+    
+    # Missing data handling
+    fill_missing: true
+    fill_method: "forward"
+
+# =============================================================================
+# FRED (Federal Reserve Economic Data) CONFIGURATION
+# =============================================================================
+fred:
+  # Service identification
+  name: "Federal Reserve Economic Data"
+  priority: 3  # Economic data source
+  enabled: true
+  
+  # API configuration (using fredapi library)
+  api:
+    base_url: "https://api.stlouisfed.org/fred"
+    api_key: "${FRED_API_KEY}"
+    timeout_seconds: 30
+    
+    # Rate limiting (120 calls per 60 seconds)
+    rate_limits:
+      requests_per_minute: 120
+      burst_size: 10
+      
+  # Economic indicators
+  indicators:
+    # Interest rates
+    interest_rates:
+      federal_funds_rate: "FEDFUNDS"
+      treasury_10y: "GS10"
+      treasury_2y: "GS2"
+      treasury_3m: "GS3M"
+      real_interest_rate: "REAINTRATREARAT10Y"
+      
+    # Inflation and prices
+    inflation:
+      cpi_all_items: "CPIAUCSL"
+      cpi_core: "CPILFESL"
+      pce_price_index: "PCEPI"
+      pce_core: "PCEPILFE"
+      producer_price_index: "PPIACO"
+      
+    # Economic growth
+    gdp:
+      real_gdp: "GDPC1"
+      nominal_gdp: "GDP"
+      gdp_growth_rate: "A191RL1Q225SBEA"
+      gdp_per_capita: "A939RX0Q048SBEA"
+      
+    # Employment
+    employment:
+      unemployment_rate: "UNRATE"
+      nonfarm_payrolls: "PAYEMS"
+      labor_force_participation: "CIVPART"
+      employment_population_ratio: "EMRATIO"
+      initial_claims: "ICSA"
+      
+    # Consumer and business
+    consumer:
+      retail_sales: "RSAFS"
+      consumer_sentiment: "UMCSENT"
+      personal_income: "PI"
+      personal_spending: "PCE"
+      consumer_credit: "TOTALSL"
+      
+    # Housing
+    housing:
+      housing_starts: "HOUST"
+      building_permits: "PERMIT"
+      home_sales_existing: "EXHOSLUSM495S"
+      home_sales_new: "HSN1F"
+      case_shiller_index: "CSUSHPISA"
+      
+    # Manufacturing and business
+    manufacturing:
+      industrial_production: "INDPRO"
+      capacity_utilization: "TCU"
+      ism_manufacturing: "NAPM"
+      ism_services: "NAPMSI"
+      durable_goods_orders: "DGORDER"
+      
+    # Money and credit
+    monetary:
+      money_supply_m1: "M1SL"
+      money_supply_m2: "M2SL"
+      bank_credit: "TOTBKCR"
+      commercial_paper: "COMPAPER"
+      
+    # International
+    international:
+      trade_balance: "BOPGSTB"
+      exports: "EXPGS"
+      imports: "IMPGS"
+      dollar_index: "DTWEXBGS"
+      
+  # Data processing
+  processing:
+    # Frequency conversion
+    frequency_mapping:
+      daily: "d"
+      weekly: "w"
+      monthly: "m"
+      quarterly: "q"
+      annual: "a"
+      
+    # Data transformations
+    transformations:
+      # FRED transformation codes
+      levels: "lin"           # No transformation
+      change: "chg"           # Change
+      change_from_year_ago: "ch1"  # Change from year ago
+      percent_change: "pch"   # Percent change
+      percent_change_from_year_ago: "pc1"  # Percent change from year ago
+      compounded_annual_rate: "pca"  # Compounded annual rate of change
+      continuously_compounded_rate: "cch"  # Continuously compounded rate of change
+      natural_log: "log"      # Natural log
+      
+    # Data cleaning
+    cleaning:
+      interpolate_missing: true
+      remove_outliers: false  # Economic data outliers may be meaningful
+      validate_ranges: true
+
+# =============================================================================
+# WEBSOCKET REAL-TIME DATA CONFIGURATION
+# =============================================================================
+websocket:
+  # Service identification
+  name: "Real-time WebSocket Streams"
+  priority: 1  # Highest priority for real-time data
+  enabled: true
+  
+  # Connection settings
+  connection:
+    max_connections: 10
+    connection_timeout: 30
+    heartbeat_interval: 30
+    reconnect_attempts: 5
+    reconnect_delay: 5
+    
+  # Data streams
+  streams:
+    # Market data streams
+    market_data:
+      enabled: true
+      symbols: ["AAPL", "GOOGL", "MSFT", "AMZN", "TSLA", "SPY", "QQQ"]
+      data_types: ["trade", "quote", "bar"]
+      
+    # News and sentiment streams
+    news:
+      enabled: false  # Disabled by default
+      sources: ["reuters", "bloomberg", "cnbc"]
+      
+    # Social media streams
+    social_media:
+      enabled: false  # Disabled by default
+      platforms: ["twitter", "reddit"]
+      
+  # Data processing
+  processing:
+    # Real-time validation
+    validation:
+      price_validation: true
+      volume_validation: true
+      timestamp_validation: true
+      
+    # Aggregation
+    aggregation:
+      time_windows: ["1s", "5s", "1m", "5m"]
+      aggregation_functions: ["ohlc", "vwap", "volume"]
+      
+    # Buffering
+    buffering:
+      buffer_size: 1000
+      flush_interval: 1  # seconds
+      
+# =============================================================================
+# DATA QUALITY AND VALIDATION
+# =============================================================================
+data_quality:
+  # Validation rules
+  validation_rules:
+    # Price validation
+    price_validation:
+      min_price: 0.01
+      max_price: 100000
+      max_price_change: 0.5  # 50% max daily change
+      
+    # Volume validation
+    volume_validation:
+      min_volume: 0
+      max_volume_spike: 10  # 10x average volume
+      
+    # OHLC validation
+    ohlc_validation:
+      high_low_consistency: true  # High >= Low
+      open_close_range: true      # Open, Close within High-Low range
+      
+    # Timestamp validation
+    timestamp_validation:
+      future_data_check: true
+      weekend_data_check: true
+      holiday_data_check: true
+      
+  # Data cleaning
+  cleaning:
+    # Missing data handling
+    missing_data:
+      method: "forward_fill"  # Options: forward_fill, backward_fill, interpolate, drop
+      max_consecutive_missing: 5
+      
+    # Outlier detection
+    outlier_detection:
+      method: "iqr"  # Options: iqr, z_score, isolation_forest
+      threshold: 3.0
+      action: "flag"  # Options: flag, remove, cap
+      
+    # Data smoothing
+    smoothing:
+      enabled: false
+      method: "moving_average"
+      window_size: 3
+      
+  # Data monitoring
+  monitoring:
+    # Quality metrics
+    quality_metrics:
+      completeness: true
+      accuracy: true
+      consistency: true
+      timeliness: true
+      
+    # Alerts
+    alerts:
+      data_quality_threshold: 0.95
+      missing_data_threshold: 0.05
+      outlier_threshold: 0.01
+      
+# =============================================================================
+# DATA STORAGE AND CACHING
+# =============================================================================
+storage:
+  # Raw data storage
+  raw_data:
+    format: "parquet"  # Options: parquet, csv, hdf5
+    compression: "snappy"
+    partition_by: ["symbol", "date"]
+    
+  # Processed data storage
+  processed_data:
+    format: "parquet"
+    compression: "snappy"
+    partition_by: ["symbol", "date"]
+    
+  # Feature storage
+  features:
+    format: "parquet"
+    compression: "snappy"
+    partition_by: ["symbol", "date"]
+    
+  # Caching strategy
+  caching:
+    # Memory cache
+    memory_cache:
+      enabled: true
+      max_size_mb: 1024
+      ttl_seconds: 3600
+      
+    # Disk cache
+    disk_cache:
+      enabled: true
+      max_size_gb: 10
+      ttl_hours: 24
+      
+    # Redis cache
+    redis_cache:
+      enabled: true
+      ttl_seconds: 1800
+      
+# =============================================================================
+# DATA PIPELINE CONFIGURATION
+# =============================================================================
+pipeline:
+  # ETL settings
+  etl:
+    # Extract
+    extract:
+      batch_size: 100
+      parallel_workers: 4
+      timeout_seconds: 300
+      
+    # Transform
+    transform:
+      chunk_size: 10000
+      parallel_processing: true
+      memory_limit_gb: 4
+      
+    # Load
+    load:
+      batch_size: 1000
+      upsert_strategy: "merge"
+      
+  # Scheduling
+  scheduling:
+    # Data collection schedules
+    schedules:
+      market_data_daily: "0 18 * * 1-5"      # Weekdays at 6 PM
+      economic_data_weekly: "0 9 * * 1"      # Mondays at 9 AM
+      fundamental_data_monthly: "0 9 1 * *"  # 1st of month at 9 AM
+      
+    # Real-time data
+    real_time:
+      enabled: true
+      market_hours_only: true
+      
+  # Error handling
+  error_handling:
+    # Retry strategy
+    retry:
+      max_attempts: 3
+      backoff_strategy: "exponential"
+      base_delay: 1
+      max_delay: 60
+      
+    # Failure handling
+    failure_handling:
+      continue_on_error: true
+      log_errors: true
+      alert_on_failure: true
+      
+# =============================================================================
+# EXTERNAL API INTEGRATIONS
+# =============================================================================
+external_apis:
+  # HTTP client settings
+  http_client:
+    timeout: 30
+    max_retries: 3
+    backoff_factor: 0.3
+    
+    # Connection pooling
+    connection_pool:
+      pool_connections: 10
+      pool_maxsize: 20
+      
+    # Headers
+    default_headers:
+      "User-Agent": "TSPMO/1.0.0"
+      "Accept": "application/json"
+      
+  # Rate limiting
+  rate_limiting:
+    # Global rate limits
+    global_limits:
+      requests_per_second: 10
+      requests_per_minute: 600
+      requests_per_hour: 36000
+      
+    # Per-source rate limits
+    source_limits:
+      alpha_vantage: 5    # requests per minute
+      yahoo_finance: 60   # requests per minute
+      fred: 120          # requests per minute
+      
+  # Circuit breaker
+  circuit_breaker:
+    enabled: true
+    failure_threshold: 5
+    recovery_timeout: 60
+    expected_exception: "requests.exceptions.RequestException" 

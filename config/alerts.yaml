@@ -1,0 +1,980 @@
+# Smart Stock Forecasting System - Alerts Configuration
+# Version: 1.0.0
+# Last Updated: 2024-12-19
+# Description: Alert thresholds and notification settings for TSPMO
+
+# =============================================================================
+# GLOBAL ALERT SETTINGS
+# =============================================================================
+global:
+  # Alert system configuration
+  system:
+    enabled: true
+    default_timezone: "US/Eastern"
+    alert_cooldown_minutes: 5      # Minimum time between duplicate alerts
+    max_alerts_per_hour: 100       # Rate limiting for alerts
+    
+    # Alert persistence
+    persistence:
+      store_alerts: true
+      retention_days: 90           # Keep alerts for 90 days
+      database_table: "alerts"
+      
+    # Alert processing
+    processing:
+      async_processing: true       # Process alerts asynchronously
+      batch_processing: true       # Batch similar alerts
+      batch_size: 10              # Maximum alerts per batch
+      batch_timeout_seconds: 30    # Maximum time to wait for batch
+      
+  # Alert levels and priorities
+  levels:
+    debug:
+      priority: 1
+      color: "#808080"             # Gray
+      
+    info:
+      priority: 2
+      color: "#0066cc"             # Blue
+      
+    warning:
+      priority: 3
+      color: "#ff9900"             # Orange
+      
+    error:
+      priority: 4
+      color: "#cc0000"             # Red
+      
+    critical:
+      priority: 5
+      color: "#990000"             # Dark Red
+      
+    emergency:
+      priority: 6
+      color: "#660000"             # Very Dark Red
+      
+  # Business hours and escalation
+  business_hours:
+    timezone: "US/Eastern"
+    weekdays:
+      start_time: "09:00"
+      end_time: "17:00"
+    weekends:
+      enabled: false               # No weekend alerts by default
+      
+    # Market hours (for trading-specific alerts)
+    market_hours:
+      pre_market_start: "04:00"
+      market_open: "09:30"
+      market_close: "16:00"
+      after_hours_end: "20:00"
+
+# =============================================================================
+# NOTIFICATION CHANNELS
+# =============================================================================
+channels:
+  # Email notifications
+  email:
+    enabled: true
+    
+    # SMTP configuration
+    smtp:
+      server: "${SMTP_SERVER:smtp.gmail.com}"
+      port: "${SMTP_PORT:587}"
+      username: "${SMTP_USERNAME}"
+      password: "${SMTP_PASSWORD}"
+      use_tls: true
+      timeout_seconds: 30
+      
+    # Email settings
+    settings:
+      from_address: "alerts@tspmo.com"
+      from_name: "TSPMO Alert System"
+      
+      # Email templates
+      templates:
+        subject_prefix: "[TSPMO]"
+        html_template: "templates/alert_email.html"
+        text_template: "templates/alert_email.txt"
+        
+      # Rate limiting
+      rate_limit:
+        max_emails_per_hour: 50
+        max_emails_per_day: 200
+        
+    # Recipients by alert level
+    recipients:
+      debug: []
+      info: ["${ALERT_EMAIL_INFO}"]
+      warning: ["${ALERT_EMAIL_WARNING}"]
+      error: ["${ALERT_EMAIL_ERROR}"]
+      critical: ["${ALERT_EMAIL_CRITICAL}"]
+      emergency: ["${ALERT_EMAIL_EMERGENCY}"]
+    
+    # Message formatting
+    formatting:
+      use_markdown: true
+      include_timestamp: true
+      include_alert_id: true
+      
+    # Alert level mapping to channels
+    channels_by_level:
+      debug: "#dev-alerts"
+      info: "#general-alerts"
+      warning: "#trading-alerts"
+      error: "#trading-alerts"
+      critical: "#critical-alerts"
+      emergency: "#emergency-alerts"
+      
+  # Discord notifications
+  discord:
+    enabled: false                 # Disabled by default
+    
+    # Discord configuration
+    webhook_url: "${DISCORD_WEBHOOK_URL}"
+    username: "TSPMO Bot"
+    avatar_url: "https://example.com/tspmo-avatar.png"
+    
+    # Embed settings
+    embeds:
+      enabled: true
+      color_by_level: true
+      include_thumbnail: true
+      include_footer: true
+      
+  # Dashboard notifications (WebSocket-based)
+  dashboard:
+    enabled: true
+    
+    # Real-time notifications via WebSocket
+    real_time:
+      websocket_enabled: true
+      websocket_endpoint: "/ws/alerts"
+      update_frequency_seconds: 5
+      
+    # Notification display
+    display:
+      max_notifications: 50        # Maximum notifications to show
+      auto_dismiss_seconds: 30     # Auto-dismiss info alerts after 30s
+      persist_critical: true       # Keep critical alerts until dismissed
+      
+    # Toast notifications
+    toast:
+      enabled: true
+      position: "top-right"
+      duration_seconds: 5
+      
+  # Log file alerts
+  log_file:
+    enabled: true
+    
+    # Log file settings
+    file_path: "logs/alerts.log"
+    rotation:
+      max_size_mb: 100
+      backup_count: 5
+      
+    # Log format
+    format: "%(asctime)s [%(levelname)s] %(alert_type)s: %(message)s"
+    date_format: "%Y-%m-%d %H:%M:%S"
+    
+
+
+# =============================================================================
+# TRADING AND MARKET ALERTS
+# =============================================================================
+trading:
+  # Price movement alerts
+  price_alerts:
+    # Significant price movements
+    price_movement:
+      enabled: true
+      thresholds:
+        minor_movement: 0.02       # 2% price movement
+        moderate_movement: 0.05    # 5% price movement
+        major_movement: 0.10       # 10% price movement
+        extreme_movement: 0.20     # 20% price movement
+      alert_levels:
+        minor_movement: "info"
+        moderate_movement: "warning"
+        major_movement: "error"
+        extreme_movement: "critical"
+        
+    # Gap alerts
+    gap_alerts:
+      enabled: true
+      thresholds:
+        small_gap: 0.02            # 2% gap
+        medium_gap: 0.05           # 5% gap
+        large_gap: 0.10            # 10% gap
+      alert_levels:
+        small_gap: "info"
+        medium_gap: "warning"
+        large_gap: "error"
+        
+  # Volume alerts
+  volume_alerts:
+    # Unusual volume
+    unusual_volume:
+      enabled: true
+      thresholds:
+        high_volume: 2.0           # 2x average volume
+        very_high_volume: 5.0      # 5x average volume
+        extreme_volume: 10.0       # 10x average volume
+      alert_levels:
+        high_volume: "info"
+        very_high_volume: "warning"
+        extreme_volume: "error"
+        
+    # Low volume
+    low_volume:
+      enabled: true
+      thresholds:
+        low_volume: 0.5            # 50% of average volume
+        very_low_volume: 0.2       # 20% of average volume
+      alert_levels:
+        low_volume: "info"
+        very_low_volume: "warning"
+        
+  # Technical indicator alerts (using finta library)
+  technical_alerts:
+    # RSI alerts
+    rsi:
+      enabled: true
+      thresholds:
+        oversold: 30               # RSI < 30 (oversold)
+        overbought: 70             # RSI > 70 (overbought)
+        extreme_oversold: 20       # RSI < 20 (extreme oversold)
+        extreme_overbought: 80     # RSI > 80 (extreme overbought)
+      alert_levels:
+        oversold: "info"
+        overbought: "info"
+        extreme_oversold: "warning"
+        extreme_overbought: "warning"
+        
+    # MACD alerts
+    macd:
+      enabled: true
+      signals:
+        bullish_crossover: "info"
+        bearish_crossover: "info"
+        divergence: "warning"
+        
+    # Bollinger Bands alerts
+    bollinger_bands:
+      enabled: true
+      signals:
+        upper_band_touch: "info"
+        lower_band_touch: "info"
+        band_squeeze: "warning"
+        band_expansion: "info"
+
+# =============================================================================
+# PORTFOLIO AND RISK ALERTS
+# =============================================================================
+portfolio:
+  # Portfolio performance alerts
+  performance:
+    # Daily P&L alerts
+    daily_pnl:
+      enabled: true
+      thresholds:
+        small_loss: -0.01          # -1% daily loss
+        moderate_loss: -0.02       # -2% daily loss
+        large_loss: -0.05          # -5% daily loss
+        extreme_loss: -0.10        # -10% daily loss
+      alert_levels:
+        small_loss: "info"
+        moderate_loss: "warning"
+        large_loss: "error"
+        extreme_loss: "critical"
+        
+    # Drawdown alerts
+    drawdown:
+      enabled: true
+      thresholds:
+        moderate_drawdown: 0.05    # 5% drawdown
+        significant_drawdown: 0.10 # 10% drawdown
+        severe_drawdown: 0.15      # 15% drawdown
+        extreme_drawdown: 0.20     # 20% drawdown
+      alert_levels:
+        moderate_drawdown: "info"
+        significant_drawdown: "warning"
+        severe_drawdown: "error"
+        extreme_drawdown: "critical"
+        
+  # Risk limit alerts
+  risk_limits:
+    # VaR alerts
+    var_alerts:
+      enabled: true
+      thresholds:
+        var_80_percent: 0.8        # 80% of VaR limit
+        var_90_percent: 0.9        # 90% of VaR limit
+        var_95_percent: 0.95       # 95% of VaR limit
+        var_breach: 1.0            # VaR limit breach
+      alert_levels:
+        var_80_percent: "info"
+        var_90_percent: "warning"
+        var_95_percent: "error"
+        var_breach: "critical"
+        
+    # Position size alerts
+    position_size:
+      enabled: true
+      thresholds:
+        large_position: 0.08       # 8% position size
+        very_large_position: 0.09  # 9% position size
+        max_position: 0.10         # 10% position size (limit)
+      alert_levels:
+        large_position: "info"
+        very_large_position: "warning"
+        max_position: "error"
+        
+    # Concentration alerts
+    concentration:
+      enabled: true
+      thresholds:
+        sector_concentration: 0.20  # 20% sector concentration
+        high_correlation: 0.8       # 80% correlation
+      alert_levels:
+        sector_concentration: "warning"
+        high_correlation: "warning"
+        
+  # Stop-loss and take-profit alerts
+  orders:
+    # Stop-loss alerts
+    stop_loss:
+      enabled: true
+      thresholds:
+        approaching_stop: 0.9      # 90% of stop-loss level
+        stop_triggered: 1.0        # Stop-loss triggered
+      alert_levels:
+        approaching_stop: "warning"
+        stop_triggered: "error"
+        
+    # Take-profit alerts
+    take_profit:
+      enabled: true
+      alert_levels:
+        profit_target_reached: "info"
+        profit_taken: "info"
+
+# =============================================================================
+# MODEL AND PREDICTION ALERTS (Updated for TSPMO Architecture)
+# =============================================================================
+models:
+  # Model performance alerts
+  performance:
+    # Accuracy alerts (targeting 55%+ directional accuracy per tpt.md)
+    accuracy:
+      enabled: true
+      thresholds:
+        target_accuracy: 0.55      # Target 55% directional accuracy
+        low_accuracy: 0.52         # 52% directional accuracy warning
+        poor_accuracy: 0.50        # 50% directional accuracy error
+        very_poor_accuracy: 0.45   # 45% directional accuracy critical
+      alert_levels:
+        below_target: "info"       # Below 55% target
+        low_accuracy: "warning"
+        poor_accuracy: "error"
+        very_poor_accuracy: "critical"
+        
+    # Prediction error alerts
+    prediction_error:
+      enabled: true
+      thresholds:
+        high_error: 0.15           # 15% prediction error
+        very_high_error: 0.20      # 20% prediction error
+        extreme_error: 0.30        # 30% prediction error
+      alert_levels:
+        high_error: "warning"
+        very_high_error: "error"
+        extreme_error: "critical"
+        
+    # Sharpe ratio alerts
+    sharpe_ratio:
+      enabled: true
+      thresholds:
+        low_sharpe: 0.5            # Sharpe ratio < 0.5
+        poor_sharpe: 0.3           # Sharpe ratio < 0.3
+        negative_sharpe: 0.0       # Negative Sharpe ratio
+      alert_levels:
+        low_sharpe: "warning"
+        poor_sharpe: "error"
+        negative_sharpe: "critical"
+        
+  # Model-specific alerts for TSPMO architecture
+  model_specific:
+    # Chronos-T5 model alerts (Primary time series model)
+    chronos:
+      enabled: true
+      model_name: "chronos-t5"
+      priority: 1                  # Highest priority in ensemble
+      
+      # Chronos-specific performance thresholds
+      performance_thresholds:
+        min_directional_accuracy: 0.55    # Minimum accuracy for Chronos
+        max_prediction_variance: 0.25     # Maximum prediction variance
+        context_length_utilization: 0.8   # Minimum context utilization
+        
+      # HuggingFace integration alerts
+      huggingface_alerts:
+        model_loading_timeout: 300         # 5 minutes timeout
+        tokenization_errors: "error"
+        memory_usage_threshold: 0.8       # 80% memory usage
+        
+      # Transformer-specific alerts
+      transformer_alerts:
+        attention_weight_anomalies: "warning"
+        gradient_explosion: "error"
+        nan_predictions: "critical"
+        
+      alert_levels:
+        performance_degradation: "warning"
+        model_loading_failure: "critical"
+        memory_overflow: "error"
+        
+    # LSTM model alerts (Deep learning baseline)
+    lstm:
+      enabled: true
+      model_name: "lstm"
+      priority: 2
+      
+      # LSTM-specific thresholds
+      performance_thresholds:
+        min_directional_accuracy: 0.52    # Minimum accuracy for LSTM
+        max_training_loss: 0.1             # Maximum training loss
+        gradient_norm_threshold: 1.0       # Gradient clipping threshold
+        
+      # PyTorch-specific alerts
+      pytorch_alerts:
+        cuda_memory_errors: "error"
+        model_convergence_issues: "warning"
+        overfitting_detection: "warning"
+        
+      alert_levels:
+        training_divergence: "error"
+        vanishing_gradients: "warning"
+        exploding_gradients: "error"
+        
+    # LightGBM model alerts (Gradient boosting)
+    lightgbm:
+      enabled: true
+      model_name: "lightgbm"
+      priority: 3
+      
+      # LightGBM-specific thresholds
+      performance_thresholds:
+        min_directional_accuracy: 0.53    # Minimum accuracy for LightGBM
+        max_overfitting_score: 0.1         # Maximum overfitting
+        feature_importance_stability: 0.8   # Feature importance stability
+        
+      # Tree-based model alerts
+      tree_alerts:
+        leaf_count_anomalies: "warning"
+        feature_selection_changes: "info"
+        early_stopping_triggered: "info"
+        
+      alert_levels:
+        overfitting_detected: "warning"
+        feature_drift: "warning"
+        training_failure: "error"
+        
+  # Model drift alerts
+  drift:
+    # Data drift (enhanced for financial time series)
+    data_drift:
+      enabled: true
+      thresholds:
+        moderate_drift: 0.05       # 5% significance level
+        significant_drift: 0.01    # 1% significance level
+      
+      # Financial data-specific drift detection
+      financial_drift:
+        volatility_regime_change: 0.3      # 30% volatility change
+        correlation_structure_change: 0.2   # 20% correlation change
+        volume_pattern_change: 0.4          # 40% volume pattern change
+        
+      alert_levels:
+        moderate_drift: "warning"
+        significant_drift: "error"
+        regime_change: "critical"
+        
+    # Concept drift
+    concept_drift:
+      enabled: true
+      thresholds:
+        performance_degradation: 0.10  # 10% performance drop
+        severe_degradation: 0.20       # 20% performance drop
+      alert_levels:
+        performance_degradation: "warning"
+        severe_degradation: "error"
+        
+    # Prediction drift
+    prediction_drift:
+      enabled: true
+      thresholds:
+        distribution_change: 0.15  # 15% change in prediction distribution
+        significant_change: 0.25   # 25% change in prediction distribution
+      alert_levels:
+        distribution_change: "warning"
+        significant_change: "error"
+        
+  # Model ensemble alerts (Three-model ensemble: Chronos + LSTM + LightGBM)
+  ensemble:
+    # Model correlation alerts
+    correlation:
+      enabled: true
+      thresholds:
+        high_correlation: 0.8      # 80% correlation between models
+        very_high_correlation: 0.9 # 90% correlation between models
+      alert_levels:
+        high_correlation: "warning"
+        very_high_correlation: "error"
+        
+    # Weight stability alerts (for weighted ensemble)
+    weight_stability:
+      enabled: true
+      
+      # Expected weight ranges per tpt.md
+      expected_weights:
+        chronos: 0.5               # 50% weight for Chronos (primary)
+        lstm: 0.3                  # 30% weight for LSTM
+        lightgbm: 0.2              # 20% weight for LightGBM
+        
+      thresholds:
+        weight_change: 0.10        # 10% weight change
+        significant_change: 0.20   # 20% weight change
+        weight_imbalance: 0.7      # No single model > 70%
+        
+      alert_levels:
+        weight_change: "info"
+        significant_change: "warning"
+        weight_imbalance: "error"
+        
+    # Ensemble diversity alerts
+    diversity:
+      enabled: true
+      thresholds:
+        min_diversity_score: 0.3   # Minimum ensemble diversity
+        prediction_variance: 0.15  # Minimum prediction variance
+      alert_levels:
+        low_diversity: "warning"
+        consensus_failure: "error"
+        
+  # Training alerts (APScheduler integration)
+  training:
+    # Training failure alerts
+    training_failure:
+      enabled: true
+      alert_levels:
+        training_failed: "error"
+        training_timeout: "warning"
+        convergence_issues: "warning"
+        
+    # Scheduled training alerts (per tpt.md timeline)
+    scheduled_training:
+      enabled: true
+      schedules:
+        weekly_retrain: "0 2 * * 1"        # Weekly retraining
+        monthly_evaluation: "0 4 1 * *"    # Monthly evaluation
+        
+      alert_levels:
+        schedule_missed: "warning"
+        training_delayed: "info"
+        
+    # Model update alerts
+    model_updates:
+      enabled: true
+      alert_levels:
+        model_retrained: "info"
+        model_deployed: "info"
+        model_rollback: "warning"
+        ensemble_rebalanced: "info"
+
+# =============================================================================
+# SYSTEM AND OPERATIONAL ALERTS
+# =============================================================================
+system:
+  # Data source alerts (Multi-source as per tpt.md)
+  data_sources:
+    # API alerts (Alpha Vantage, Yahoo Finance, FRED)
+    api_alerts:
+      enabled: true
+      
+      # API-specific configurations
+      alpha_vantage:
+        rate_limit_warning: 0.8    # 80% of rate limit (5 req/min)
+        rate_limit_critical: 0.95  # 95% of rate limit
+        daily_limit_warning: 0.9   # 90% of daily limit (500 req/day)
+        
+      yahoo_finance:
+        rate_limit_warning: 0.8    # 80% of rate limit (60 req/min)
+        connection_timeout: 30     # 30 second timeout
+        
+      fred_api:
+        rate_limit_warning: 0.8    # 80% of rate limit (120 req/min)
+        data_freshness_hours: 24   # Alert if data > 24 hours old
+        
+      alert_levels:
+        api_unavailable: "critical"
+        rate_limit_warning: "warning"
+        rate_limit_critical: "error"
+        data_quality_issues: "warning"
+        stale_data: "warning"
+        failover_activated: "info"
+        
+    # WebSocket alerts (Real-time streaming)
+    websocket_alerts:
+      enabled: true
+      
+      # WebSocket-specific thresholds
+      connection_monitoring:
+        max_reconnection_attempts: 5
+        heartbeat_timeout: 30      # 30 second heartbeat
+        message_latency_threshold: 1000  # 1 second latency
+        
+      alert_levels:
+        connection_lost: "error"
+        reconnection_failed: "critical"
+        data_stream_interrupted: "warning"
+        high_latency: "warning"
+        buffer_overflow: "error"
+        
+  # Database alerts (SQLAlchemy + PostgreSQL/SQLite)
+  database:
+    # Connection alerts
+    connection:
+      enabled: true
+      
+      # Database-specific monitoring
+      postgresql:
+        max_connections: 100
+        slow_query_threshold: 5000  # 5 second queries
+        lock_timeout: 30           # 30 second lock timeout
+        
+      sqlite:
+        file_size_limit_gb: 10     # 10 GB file size limit
+        vacuum_frequency_days: 7   # Weekly vacuum operations
+        
+      alert_levels:
+        connection_failed: "critical"
+        slow_queries: "warning"
+        high_cpu_usage: "warning"
+        high_memory_usage: "warning"
+        deadlock_detected: "error"
+        
+    # Storage alerts
+    storage:
+      enabled: true
+      thresholds:
+        disk_usage_warning: 0.8    # 80% disk usage
+        disk_usage_critical: 0.9   # 90% disk usage
+        
+      # Alembic migration alerts
+      migration_alerts:
+        migration_failure: "critical"
+        schema_drift: "warning"
+        
+      alert_levels:
+        disk_usage_warning: "warning"
+        disk_usage_critical: "error"
+        backup_failed: "error"
+        migration_needed: "info"
+        
+  # Application alerts (FastAPI + Streamlit + CLI)
+  application:
+    # Performance alerts
+    performance:
+      enabled: true
+      
+      # FastAPI-specific thresholds
+      fastapi:
+        max_response_time_ms: 100  # 100ms response time target
+        max_concurrent_requests: 100
+        error_rate_threshold: 0.05 # 5% error rate
+        
+      # Streamlit dashboard alerts
+      streamlit:
+        page_load_time_threshold: 3000  # 3 second page load
+        websocket_connection_issues: "warning"
+        
+      thresholds:
+        high_latency: 1000         # 1 second latency
+        very_high_latency: 5000    # 5 second latency
+        high_memory_usage: 0.8     # 80% memory usage
+        high_cpu_usage: 0.8        # 80% CPU usage
+        
+      alert_levels:
+        high_latency: "warning"
+        very_high_latency: "error"
+        high_memory_usage: "warning"
+        high_cpu_usage: "warning"
+        application_crash: "critical"
+        service_unavailable: "critical"
+        
+    # Security alerts
+    security:
+      enabled: true
+      alert_levels:
+        unauthorized_access: "critical"
+        failed_authentication: "warning"
+        suspicious_activity: "error"
+        data_breach: "emergency"
+        api_key_compromise: "critical"
+
+# =============================================================================
+# MARKET CONDITION ALERTS
+# =============================================================================
+market:
+  # Volatility alerts
+  volatility:
+    # VIX alerts
+    vix_alerts:
+      enabled: true
+      thresholds:
+        elevated_vix: 20           # VIX > 20
+        high_vix: 30               # VIX > 30
+        extreme_vix: 40            # VIX > 40
+      alert_levels:
+        elevated_vix: "info"
+        high_vix: "warning"
+        extreme_vix: "error"
+        
+    # Realized volatility alerts
+    realized_volatility:
+      enabled: true
+      thresholds:
+        high_volatility: 0.25      # 25% annualized volatility
+        extreme_volatility: 0.40   # 40% annualized volatility
+      alert_levels:
+        high_volatility: "warning"
+        extreme_volatility: "error"
+        
+  # Market stress alerts
+  stress:
+    # Credit spread alerts
+    credit_spreads:
+      enabled: true
+      thresholds:
+        elevated_spreads: 150      # 150 basis points
+        high_spreads: 300          # 300 basis points
+        extreme_spreads: 500       # 500 basis points
+      alert_levels:
+        elevated_spreads: "info"
+        high_spreads: "warning"
+        extreme_spreads: "error"
+        
+    # Correlation alerts
+    correlation:
+      enabled: true
+      thresholds:
+        high_correlation: 0.8      # 80% average correlation
+        extreme_correlation: 0.9   # 90% average correlation
+      alert_levels:
+        high_correlation: "warning"
+        extreme_correlation: "error"
+        
+  # Economic alerts (FRED API integration)
+  economic:
+    # Interest rate alerts
+    interest_rates:
+      enabled: true
+      thresholds:
+        rate_change: 0.25          # 25 basis point change
+        significant_change: 0.50   # 50 basis point change
+      alert_levels:
+        rate_change: "info"
+        significant_change: "warning"
+        
+    # Economic indicator alerts
+    indicators:
+      enabled: true
+      alert_levels:
+        gdp_release: "info"
+        employment_data: "info"
+        inflation_data: "info"
+        fed_announcement: "warning"
+
+# =============================================================================
+# ALERT ROUTING AND ESCALATION
+# =============================================================================
+routing:
+  # Alert routing rules
+  rules:
+    # Route by alert type
+    by_type:
+      trading_alerts: ["email", "dashboard"]
+      risk_alerts: ["email", "dashboard"]
+      model_alerts: ["email", "dashboard"]
+      system_alerts: ["email", "log_file"]
+      chronos_alerts: ["email", "dashboard"]  # High priority for primary model
+      
+    # Route by severity
+    by_severity:
+      info: ["dashboard", "log_file"]
+      warning: ["email", "dashboard", "log_file"]
+      error: ["email", "dashboard", "log_file"]
+      critical: ["email", "dashboard", "log_file"]
+      emergency: ["email", "dashboard", "log_file"]
+      
+    # Route by time (market hours consideration)
+    by_time:
+      market_hours: ["email", "dashboard"]
+      after_hours: ["email", "dashboard"]
+      weekends: ["email", "dashboard"]
+      
+  # Escalation rules
+  escalation:
+    # Time-based escalation
+    time_based:
+      enabled: true
+      escalation_intervals:
+        first_escalation: 15       # 15 minutes
+        second_escalation: 30      # 30 minutes
+        final_escalation: 60       # 60 minutes
+        
+    # Acknowledgment-based escalation
+    acknowledgment_based:
+      enabled: true
+      require_acknowledgment: ["critical", "emergency"]
+      escalation_timeout: 10       # 10 minutes without acknowledgment
+      
+  # Alert suppression
+  suppression:
+    # Duplicate suppression
+    duplicate_suppression:
+      enabled: true
+      suppression_window: 300      # 5 minutes
+      
+    # Flood control
+    flood_control:
+      enabled: true
+      max_alerts_per_minute: 10
+      flood_threshold: 20
+      
+    # Maintenance mode
+    maintenance_mode:
+      enabled: false
+      suppress_all_alerts: false
+      suppress_non_critical: true
+
+# =============================================================================
+# ALERT TEMPLATES AND FORMATTING
+# =============================================================================
+templates:
+  # Email templates
+  email:
+    # Subject templates
+    subjects:
+      trading_alert: "[TSPMO] Trading Alert: {symbol} - {alert_type}"
+      risk_alert: "[TSPMO] Risk Alert: {alert_type} - {severity}"
+      model_alert: "[TSPMO] Model Alert: {model_name} - {alert_type}"
+      system_alert: "[TSPMO] System Alert: {component} - {alert_type}"
+      chronos_alert: "[TSPMO] Chronos-T5 Alert: {alert_type} - {severity}"
+      ensemble_alert: "[TSPMO] Ensemble Alert: {alert_type} - {severity}"
+      
+    # Body templates
+    bodies:
+      default: |
+        Alert Type: {alert_type}
+        Severity: {severity}
+        Timestamp: {timestamp}
+        
+        Description: {description}
+        
+        Details:
+        {details}
+        
+        Action Required: {action_required}
+        
+        ---
+        TSPMO Alert System
+        
+      model_specific: |
+        Model: {model_name}
+        Alert Type: {alert_type}
+        Severity: {severity}
+        Timestamp: {timestamp}
+        
+        Performance Metrics:
+        - Directional Accuracy: {directional_accuracy:.2%}
+        - Prediction Error: {prediction_error:.2%}
+        - Sharpe Ratio: {sharpe_ratio:.2f}
+        
+        Description: {description}
+        
+        Recommended Actions:
+        {recommended_actions}
+        
+        ---
+        TSPMO Model Monitoring System
+        
+  # Dashboard templates
+  dashboard:
+    # Notification templates
+    notifications:
+      toast: |
+        {alert_type}: {description}
+        
+      popup: |
+        Alert: {alert_type}
+        Severity: {severity}
+        Time: {timestamp}
+        Description: {description}
+        
+      model_performance: |
+        Model: {model_name}
+        Accuracy: {directional_accuracy:.1%}
+        Error: {prediction_error:.1%}
+        Status: {status}
+        
+# =============================================================================
+# ALERT TESTING AND VALIDATION
+# =============================================================================
+testing:
+  # Test alerts
+  test_alerts:
+    enabled: true
+    test_schedule: "0 9 * * 1"     # Weekly test on Monday at 9 AM
+    test_channels: ["email", "dashboard"]
+    
+    # Model-specific test alerts
+    model_tests:
+      chronos_health_check: "0 8 * * *"    # Daily Chronos health check
+      ensemble_validation: "0 10 * * 1"    # Weekly ensemble validation
+      
+  # Alert validation
+  validation:
+    # Validate alert configuration
+    validate_config: true
+    
+    # Test notification channels
+    test_channels: true
+    
+    # Validate templates
+    validate_templates: true
+    
+    # Model alert validation
+    model_validation:
+      test_model_alerts: true
+      validate_thresholds: true
+      check_alert_routing: true
+    
+  # Alert metrics
+  metrics:
+    # Track alert statistics
+    track_statistics: true
+    
+    # Alert response times
+    track_response_times: true
+    
+    # Alert effectiveness
+    track_effectiveness: true
+    
+    # Model-specific metrics
+    model_metrics:
+      alert_accuracy: true          # Track alert prediction accuracy
+      false_positive_rate: true     # Monitor false positive alerts
+      alert_correlation: true       # Correlation between alerts and events 

@@ -1,0 +1,671 @@
+# Smart Stock Forecasting System - Model Configuration
+# Version: 1.0.0
+# Last Updated: 2024-12-19
+# Description: ML model parameters and training configurations for TSPMO
+
+# =============================================================================
+# GLOBAL MODEL SETTINGS
+# =============================================================================
+global:
+  # Random seed for reproducibility
+  random_seed: 42
+  
+  # Model versioning
+  model_version: "1.0.0"
+  model_registry_path: "data/models"
+  
+  # Training settings
+  training:
+    validation_split: 0.2
+    test_split: 0.1
+    cross_validation_folds: 5
+    early_stopping_patience: 10
+    
+    # Data preprocessing
+    preprocessing:
+      normalize_features: true
+      handle_missing_values: true
+      outlier_detection: true
+      outlier_threshold: 3.0  # Standard deviations
+      
+    # Feature selection
+    feature_selection:
+      enabled: true
+      method: "mutual_info"  # Options: mutual_info, f_regression, rfe
+      max_features: 50
+      min_feature_importance: 0.01
+  
+  # Evaluation settings
+  evaluation:
+    metrics:
+      - "mse"           # Mean Squared Error
+      - "mae"           # Mean Absolute Error
+      - "rmse"          # Root Mean Squared Error
+      - "mape"          # Mean Absolute Percentage Error
+      - "directional_accuracy"  # Percentage of correct direction predictions
+      - "sharpe_ratio"  # Risk-adjusted returns
+      - "max_drawdown"  # Maximum portfolio drawdown
+    
+    # Backtesting configuration
+    backtesting:
+      initial_capital: 100000
+      transaction_cost: 0.001  # 0.1% per trade
+      slippage: 0.0005        # 0.05% slippage
+      rebalance_frequency: "daily"
+      
+    # Walk-forward validation
+    walk_forward:
+      enabled: true
+      train_window_days: 252   # 1 year
+      test_window_days: 21     # 1 month
+      step_size_days: 21       # Monthly steps
+
+# =============================================================================
+# CHRONOS-T5 MODEL CONFIGURATION (Primary Time Series Model)
+# =============================================================================
+chronos:
+  # Model identification
+  model_name: "chronos-t5"
+  model_type: "transformer"
+  priority: 1  # Highest priority in ensemble
+  
+  # Hugging Face model configuration
+  huggingface:
+    model_name: "amazon/chronos-t5-small"  # Options: tiny, mini, small, base, large
+    cache_dir: "data/models/chronos_cache"
+    use_auth_token: false
+    trust_remote_code: true
+    
+    # Model loading settings
+    torch_dtype: "float32"  # Options: float16, float32, bfloat16
+    device_map: "auto"      # Automatic device mapping
+    low_cpu_mem_usage: true
+    
+  # Tokenization settings
+  tokenization:
+    max_length: 512
+    padding: "max_length"
+    truncation: true
+    return_tensors: "pt"
+  
+  # Training configuration
+  training:
+    # Fine-tuning parameters
+    fine_tune: true
+    learning_rate: 5e-5
+    weight_decay: 0.01
+    warmup_steps: 1000
+    max_epochs: 10
+    batch_size: 8
+    gradient_accumulation_steps: 4
+    
+    # Optimizer settings
+    optimizer: "adamw"
+    adam_beta1: 0.9
+    adam_beta2: 0.999
+    adam_epsilon: 1e-8
+    
+    # Learning rate scheduler
+    lr_scheduler: "cosine"
+    lr_scheduler_kwargs:
+      T_max: 10000
+      eta_min: 1e-6
+    
+    # Mixed precision training
+    mixed_precision: true
+    fp16: false
+    bf16: true  # Use bfloat16 if available
+    
+  # Prediction settings
+  prediction:
+    context_length: 64      # Historical context window
+    prediction_length: 5    # Forecast horizon (days)
+    num_samples: 100        # Monte Carlo samples for uncertainty
+    temperature: 1.0        # Sampling temperature
+    top_k: 50              # Top-k sampling
+    top_p: 0.9             # Nucleus sampling
+    
+    # Quantile prediction
+    quantiles:
+      - 0.1   # 10th percentile
+      - 0.25  # 25th percentile
+      - 0.5   # Median
+      - 0.75  # 75th percentile
+      - 0.9   # 90th percentile
+  
+  # Data preprocessing for Chronos
+  data_preprocessing:
+    # Time series normalization
+    normalization: "z_score"  # Options: z_score, min_max, robust
+    
+    # Frequency conversion
+    frequency: "D"  # Daily frequency
+    
+    # Missing value handling
+    fill_method: "forward"  # Options: forward, backward, interpolate
+    
+    # Seasonal decomposition
+    seasonal_decompose: false
+    seasonal_period: 252  # Trading days in a year
+
+# =============================================================================
+# LSTM MODEL CONFIGURATION (Deep Learning Baseline)
+# =============================================================================
+lstm:
+  # Model identification
+  model_name: "lstm"
+  model_type: "recurrent"
+  priority: 2
+  
+  # Architecture configuration
+  architecture:
+    # LSTM layers
+    lstm_layers: 2
+    hidden_size: 128
+    dropout: 0.2
+    bidirectional: false
+    
+    # Dense layers
+    dense_layers: 2
+    dense_units: [64, 32]
+    dense_dropout: 0.3
+    
+    # Output layer
+    output_activation: "linear"
+    
+  # Training configuration
+  training:
+    # Optimization
+    learning_rate: 0.001
+    optimizer: "adam"
+    loss_function: "mse"
+    
+    # Training parameters
+    batch_size: 32
+    max_epochs: 100
+    early_stopping_patience: 15
+    reduce_lr_patience: 10
+    reduce_lr_factor: 0.5
+    min_lr: 1e-6
+    
+    # Regularization
+    l1_regularization: 0.0
+    l2_regularization: 0.001
+    gradient_clipping: 1.0
+    
+  # Data configuration
+  data:
+    # Sequence parameters
+    sequence_length: 60     # 60 days of historical data
+    prediction_horizon: 5   # 5 days ahead
+    
+    # Feature engineering
+    features:
+      - "open"
+      - "high"
+      - "low"
+      - "close"
+      - "volume"
+      - "returns"
+      - "volatility"
+      - "rsi"
+      - "macd"
+      - "bollinger_bands"
+    
+    # Data scaling
+    scaling:
+      method: "standard"    # Options: standard, minmax, robust
+      feature_range: [-1, 1]
+
+# =============================================================================
+# LIGHTGBM MODEL CONFIGURATION (Gradient Boosting)
+# =============================================================================
+lightgbm:
+  # Model identification
+  model_name: "lightgbm"
+  model_type: "gradient_boosting"
+  priority: 3
+  
+  # Model parameters
+  parameters:
+    # Core parameters
+    objective: "regression"
+    metric: "rmse"
+    boosting_type: "gbdt"
+    num_leaves: 31
+    learning_rate: 0.05
+    feature_fraction: 0.9
+    bagging_fraction: 0.8
+    bagging_freq: 5
+    verbose: -1
+    
+    # Regularization
+    lambda_l1: 0.1
+    lambda_l2: 0.2
+    min_data_in_leaf: 20
+    min_gain_to_split: 0.0
+    
+    # Tree parameters
+    max_depth: -1
+    min_child_samples: 20
+    subsample: 0.8
+    colsample_bytree: 0.8
+    
+  # Training configuration
+  training:
+    num_boost_round: 1000
+    early_stopping_rounds: 100
+    verbose_eval: 100
+    
+    # Cross-validation
+    cv_folds: 5
+    stratified: false
+    shuffle: true
+    
+  # Feature engineering
+  features:
+    # Technical indicators
+    technical_indicators:
+      - "sma_5"
+      - "sma_10"
+      - "sma_20"
+      - "sma_50"
+      - "ema_12"
+      - "ema_26"
+      - "rsi_14"
+      - "macd"
+      - "macd_signal"
+      - "macd_histogram"
+      - "bollinger_upper"
+      - "bollinger_lower"
+      - "bollinger_width"
+      - "atr_14"
+      - "stoch_k"
+      - "stoch_d"
+      - "williams_r"
+      - "cci_20"
+      - "adx_14"
+      - "aroon_up"
+      - "aroon_down"
+    
+    # Price-based features
+    price_features:
+      - "returns_1d"
+      - "returns_5d"
+      - "returns_10d"
+      - "returns_20d"
+      - "volatility_5d"
+      - "volatility_10d"
+      - "volatility_20d"
+      - "price_momentum_5d"
+      - "price_momentum_10d"
+      - "volume_ratio_5d"
+      - "volume_ratio_10d"
+    
+    # Lag features
+    lag_features:
+      periods: [1, 2, 3, 5, 10, 20]
+      variables: ["close", "volume", "returns"]
+    
+    # Rolling statistics
+    rolling_features:
+      windows: [5, 10, 20, 50]
+      statistics: ["mean", "std", "min", "max", "skew", "kurt"]
+      variables: ["close", "volume", "returns"]
+
+# =============================================================================
+# ENSEMBLE MODEL CONFIGURATION
+# =============================================================================
+ensemble:
+  # Ensemble identification
+  model_name: "ensemble"
+  model_type: "ensemble"
+  
+  # Ensemble method
+  method: "weighted_average"  # Options: weighted_average, stacking, voting
+  
+  # Model weights (will be optimized during training)
+  weights:
+    chronos: 0.5      # 50% weight for Chronos
+    lstm: 0.3         # 30% weight for LSTM
+    lightgbm: 0.2     # 20% weight for LightGBM
+  
+  # Weight optimization
+  weight_optimization:
+    enabled: true
+    method: "minimize_mse"  # Options: minimize_mse, maximize_sharpe, minimize_var
+    constraints:
+      min_weight: 0.1
+      max_weight: 0.7
+      sum_to_one: true
+    
+    # Optimization algorithm
+    optimizer: "scipy_minimize"
+    optimizer_options:
+      method: "SLSQP"
+      maxiter: 1000
+      ftol: 1e-9
+  
+  # Ensemble training
+  training:
+    # Meta-learner for stacking (if method is stacking)
+    meta_learner: "linear_regression"
+    
+    # Cross-validation for ensemble
+    cv_folds: 5
+    cv_method: "time_series_split"
+    
+    # Performance evaluation
+    evaluation_metric: "directional_accuracy"
+    
+  # Prediction aggregation
+  prediction:
+    # Confidence intervals
+    confidence_intervals: [0.05, 0.25, 0.75, 0.95]
+    
+    # Uncertainty quantification
+    uncertainty_method: "ensemble_variance"
+    
+    # Output format
+    output_format: "full"  # Options: point, interval, full
+
+# =============================================================================
+# FEATURE ENGINEERING CONFIGURATION
+# =============================================================================
+feature_engineering:
+  # Technical indicators (using finta library)
+  technical_indicators:
+    enabled: true
+    
+    # Moving averages
+    moving_averages:
+      sma_periods: [5, 10, 20, 50, 200]
+      ema_periods: [12, 26, 50]
+      wma_periods: [10, 20]
+      
+    # Momentum indicators
+    momentum:
+      rsi_period: 14
+      stoch_k_period: 14
+      stoch_d_period: 3
+      williams_r_period: 14
+      cci_period: 20
+      
+    # Trend indicators
+    trend:
+      macd_fast: 12
+      macd_slow: 26
+      macd_signal: 9
+      adx_period: 14
+      aroon_period: 14
+      
+    # Volatility indicators
+    volatility:
+      bollinger_period: 20
+      bollinger_std: 2
+      atr_period: 14
+      
+    # Volume indicators
+    volume:
+      obv: true
+      ad_line: true
+      cmf_period: 20
+      
+  # Price-based features
+  price_features:
+    # Returns
+    returns:
+      periods: [1, 2, 3, 5, 10, 20]
+      log_returns: true
+      
+    # Volatility
+    volatility:
+      periods: [5, 10, 20, 50]
+      method: "standard"  # Options: standard, parkinson, garman_klass
+      
+    # Price patterns
+    patterns:
+      gaps: true
+      price_channels: true
+      support_resistance: true
+      
+  # Market microstructure features
+  microstructure:
+    # Bid-ask spread (if available)
+    bid_ask_spread: false
+    
+    # Order flow (if available)
+    order_flow: false
+    
+    # Market impact
+    market_impact: false
+    
+  # Fundamental features (basic)
+  fundamental:
+    # Financial ratios
+    ratios:
+      pe_ratio: true
+      pb_ratio: true
+      debt_to_equity: true
+      roe: true
+      roa: true
+      
+    # Growth metrics
+    growth:
+      revenue_growth: true
+      earnings_growth: true
+      
+  # Macroeconomic features
+  macroeconomic:
+    # Interest rates
+    interest_rates:
+      fed_funds_rate: true
+      treasury_10y: true
+      
+    # Economic indicators
+    economic_indicators:
+      gdp_growth: true
+      inflation_rate: true
+      unemployment_rate: true
+      
+    # Market indices
+    market_indices:
+      sp500: true
+      nasdaq: true
+      vix: true
+
+# =============================================================================
+# MODEL EVALUATION AND VALIDATION
+# =============================================================================
+evaluation:
+  # Validation strategy
+  validation:
+    method: "time_series_split"  # Options: time_series_split, walk_forward, expanding_window
+    
+    # Time series split parameters
+    time_series_split:
+      n_splits: 5
+      test_size: 0.2
+      gap: 0  # Days between train and test
+      
+    # Walk-forward validation
+    walk_forward:
+      train_window: 252  # 1 year
+      test_window: 21    # 1 month
+      step_size: 21      # Monthly steps
+      
+  # Performance metrics
+  metrics:
+    # Regression metrics
+    regression:
+      - "mse"
+      - "rmse"
+      - "mae"
+      - "mape"
+      - "r2_score"
+      
+    # Financial metrics
+    financial:
+      - "directional_accuracy"
+      - "hit_ratio"
+      - "sharpe_ratio"
+      - "sortino_ratio"
+      - "calmar_ratio"
+      - "max_drawdown"
+      - "var_95"
+      - "cvar_95"
+      
+    # Information metrics
+    information:
+      - "information_ratio"
+      - "tracking_error"
+      - "active_return"
+      
+  # Model comparison
+  comparison:
+    # Benchmark models
+    benchmarks:
+      - "buy_and_hold"
+      - "random_walk"
+      - "moving_average"
+      - "linear_regression"
+      
+    # Statistical tests
+    statistical_tests:
+      - "diebold_mariano"
+      - "model_confidence_set"
+      - "reality_check"
+      
+  # Model interpretation
+  interpretation:
+    # Feature importance
+    feature_importance:
+      method: "shap"  # Options: shap, permutation, built_in
+      
+    # SHAP analysis
+    shap:
+      explainer_type: "tree"  # Options: tree, linear, kernel, deep
+      background_samples: 100
+      
+    # Partial dependence plots
+    partial_dependence:
+      enabled: true
+      features: ["rsi_14", "macd", "bollinger_width", "volume_ratio_5d"]
+
+# =============================================================================
+# MODEL DEPLOYMENT AND SERVING
+# =============================================================================
+deployment:
+  # Model serving
+  serving:
+    # Inference settings
+    inference:
+      batch_size: 32
+      max_latency_ms: 100
+      timeout_seconds: 30
+      
+    # Model loading
+    loading:
+      lazy_loading: true
+      model_warming: true
+      cache_predictions: true
+      
+    # Scaling
+    scaling:
+      auto_scaling: true
+      min_replicas: 1
+      max_replicas: 5
+      target_cpu_utilization: 70
+      
+  # Model monitoring
+  monitoring:
+    # Performance monitoring
+    performance:
+      track_latency: true
+      track_throughput: true
+      track_errors: true
+      
+    # Data drift detection
+    data_drift:
+      enabled: true
+      method: "ks_test"  # Options: ks_test, psi, wasserstein
+      threshold: 0.05
+      
+    # Model drift detection
+    model_drift:
+      enabled: true
+      method: "prediction_drift"
+      threshold: 0.1
+      
+  # Model updates
+  updates:
+    # Retraining schedule
+    retraining:
+      schedule: "weekly"
+      trigger_conditions:
+        - "performance_degradation"
+        - "data_drift"
+        - "scheduled_time"
+        
+    # A/B testing
+    ab_testing:
+      enabled: false
+      traffic_split: 0.1  # 10% traffic to new model
+      
+    # Rollback strategy
+    rollback:
+      auto_rollback: true
+      performance_threshold: 0.05  # 5% performance drop triggers rollback
+
+# =============================================================================
+# RISK MANAGEMENT INTEGRATION
+# =============================================================================
+risk_management:
+  # Model risk controls
+  model_risk:
+    # Prediction limits
+    max_prediction_change: 0.2  # 20% maximum daily change prediction
+    min_confidence_threshold: 0.6
+    
+    # Ensemble requirements
+    min_models_agreement: 2  # At least 2 models must agree
+    max_model_weight: 0.7   # No single model > 70% weight
+    
+  # Data quality checks
+  data_quality:
+    # Input validation
+    input_validation:
+      check_missing_values: true
+      check_outliers: true
+      check_data_freshness: true
+      max_age_hours: 24
+    
+    # Feature validation
+    feature_validation:
+      check_feature_drift: true
+      check_feature_correlation: true
+      max_correlation_change: 0.3
+
+# =============================================================================
+# EXPERIMENTAL FEATURES
+# =============================================================================
+experimental:
+  # Advanced models (disabled by default)
+  advanced_models:
+    transformer_xl: false
+    gpt_for_timeseries: false
+    neural_ode: false
+    
+  # Alternative data sources
+  alternative_data:
+    sentiment_analysis: false
+    news_embeddings: false
+    social_media_signals: false
+    satellite_data: false
+  
+  # Advanced techniques
+  advanced_techniques:
+    meta_learning: false
+    few_shot_learning: false
+    continual_learning: false
+    federated_learning: false 
